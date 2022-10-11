@@ -75,3 +75,125 @@ install.packages("tidyverse") # Put hashtag in front of this after installing
 library(tidyverse)
 ```
 
+## Loading Data
+
+For this workshop, we will use the `read_csv()` function to load our data. Some of the groups will end up using different functions, but this is the most straightforward.
+
+### Let's start with Professor Han's team using American Community Survey data.
+
+```{r}
+vermont_zips <- read_csv("https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/vermont_zips.csv")
+```
+
+We have a row for each Vermont zip code. The variable is from the census table B25071 which is "median gross rent as a percentage of household income." Let's look at the distribution of this variable using the `summary()` function.
+
+```{r}
+summary(vermont_zips$estimate)
+```
+
+And now let's pull the variable only for Middlebury's zip code (05753)
+
+```{r}
+vermont_zips$estimate[vermont_zips$GEOID=="05753"]
+```
+
+This also works:
+
+```{r}
+vermont_zips |> 
+  filter(GEOID == "05753") |> # To choose the rows of the dataframe
+  select(GEOID, estimate) # To choose the columns of the dataframe
+```
+
+### Now an example from Professor McCallum's election data
+
+```{r}
+vermont_cces <- read_csv("https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/vermont_cces.csv")
+```
+
+Let's see what the distribution of union households is
+
+```{r}
+table(vermont_cces$union_hh)
+```
+
+We know from the codebook that 1 = "Yes, Currently", 2 = "Yes, Formerly", and 3 = "No, Never". Let's create a new variable which will be a factor variable based on the existing union_hh variable with those category labels.
+
+```{r}
+vermont_cces <- vermont_cces |> 
+  mutate(union_hh_cat = factor(union_hh,
+                               labels = c("Yes, Currently",
+                                          "Yes, Formerly",
+                                          "No, Never")))
+```
+
+And make a table with this new variable:
+
+```{r}
+table(vermont_cces$union_hh_cat)
+```
+
+What proportion of households are in each category?
+
+```{r}
+prop.table(table(vermont_cces$union_hh_cat))
+```
+
+Let's make one more variable - a binary variable - identifying households with any union status. Read this as: mutate to create a new variable called `union_hh_any`. If the string "Yes" is detected in the value of union_hh_cat, the value of union_hh_any should be 1. If the string detects anything else instead, the value of union_hh_any should be 0.
+
+```{r}
+vermont_cces <- vermont_cces |> 
+  mutate(union_hh_any = ifelse(str_detect(union_hh_cat, "Yes"), 1, 0))
+```
+
+Now that we have a binary variable, we can use summary to work with easily. The mean of a binary variable is the proportion with a 1, so the mean from the summary below tells us the proportion of households in Vermont that currently or formerly have union members.
+
+```{r}
+summary(vermont_cces$union_hh_any)
+```
+
+### Finally, Professor Tiger
+
+```{r}
+pew_w74 <- read_csv("https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/pew_w74.csv")
+```
+
+We'll try a cross-tabulation this time. The `F_GENDER` variable takes the values of 1 for "Man" and 2 for "Woman". What is the distribution of gender?
+
+```{r}
+table(pew_w74$F_GENDER)
+```
+
+Let's see how the distribution of responses to the cancel culture question vary by gender. The wording of `CANCUL1` is: "In general, when people publicly call out others on social media for posting content that might be considered offensive, are they more likely to...". The possible responses are:
+
+1: Hold people accountable for their actions
+2: Punish people who didn't deserve it
+
+For a cross-tabulation, include both variables in the table function:
+
+```{r}
+table(pew_w74$F_GENDER, pew_w74$CANCUL1_W74)
+```
+
+Those are frequencies. Wrap the table in `prop.table()` for proportions.
+
+```{r}
+prop.table(table(pew_w74$F_GENDER, pew_w74$CANCUL1_W74))
+```
+
+Those are cell frequencies. Add a `,1` to get row proportions and a `,2` to get column proportions.
+
+```{r}
+prop.table(table(pew_w74$F_GENDER, pew_w74$CANCUL1_W74),1)
+```
+
+This also works if you want to stay within the tidyverse...
+
+```{r}
+pew_w74 |> 
+  group_by(F_GENDER) |> 
+  count(CANCUL1_W74) |> 
+  mutate(gender_total = sum(n),
+         gender_prop = n/gender_total)
+```
+
