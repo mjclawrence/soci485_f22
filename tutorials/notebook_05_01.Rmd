@@ -1,0 +1,67 @@
+---
+title: "Getting Started With R"
+author: "ML"
+date: "2022-10-11"
+output: html_document
+---
+
+## Getting Started
+
+To begin, copy all the text on this screen. Then open RStudio, and in the "File" menu select "New File" then "R Markdown". Add a title like "SOCI 485, Week Five, Class One", include your name in the "Author" box, select "HTML" as the Default Output Format, and click Ok. A default markdown file will open. Delete all the text in the default file below the header (everything after line 7) and paste in the text you copied to your clipboard. Make sure that "R Markdown" is selected in the file type drop down menu in the bottom right corner of this pane. Save this file in the "tutorials" folder in your R Project for this course.
+
+## Welcome to R Studio!
+
+Let's start with a recap of some navigation before we begin:
+
+- The upper left pane is the *text editor* where you keep all of your commands.
+- The lower left pane is the *console* where the commands will be executed.
+- The upper right pane's `Environment` window will show the data that you load.
+- The lower right pane will show previews of your R Markdown documents, plots, help documents, packages, and other features.
+
+This file is an R Markdown Notebook which is an R Markdown file that allows you to integrate text, R code, and R output into a single document. This is the recommended file type for our section, but you may want to use other file types in the future. All the possible file types are found when you click File>New File. For our purposes - and for producing transparent and reproducible research - the advantage of an R Notebook is that you can easily include text, notes, and comments that are not code (like this paragraph).
+
+How does R know what is code and what is regular text? In an R Notebook, code goes in a fenced code block. To open the fence, type three backticks and an r in curly brackets on a single line; to close the fence, type three backticks on a single line like this:
+
+```{r}
+
+```
+
+Everything between those fences will be run as code (unless it is preceded by a hashtag).
+
+*Want a shortcut? On a mac, Command-Option-I will open a blank code block. For Windows, use Control-Alt-I.*
+
+Let's start with seeing how to save objects in R. Since even the following calculation is considered code we need to place it within a code block. After the r, in the line where you open your fence, you can provide a short description of what the code in that chunk does. Those short descriptions are collected as bookmarks in the drop down menu on the bottom of this pane and can help you find pieces of your file.
+
+Note that multiple chunks cannot have the same description. If they do, the file will not knit.
+
+In the chunk below, we are creating an object named `coursenumber` and we are assigning it the value of 400 + 85?
+
+```{r object example}
+coursenumber <- 400 + 85
+```
+
+After writing the code to complete the object assignment, press the right-facing green arrow to run the code in the current chunk. The icon in the center runs all the code in chunks above the current chunk. The gear icon offers some option (like naming the chunk).
+
+*The Mac keyboard shortcut for running the individual line where your cursor blinks is: Command-Return. The Mac keyboard shortcut for running the full chunk in which your cursor blinks is: Shift-Command-Return.*
+
+## Introducing R Markdown
+
+For our workshops, we will be using R Notebooks with R Markdown to write and run our code. R Markdown is a plain text-based form of writing with lots of neat tricks. For example, look at the heading for this paragraph. The two hashtags are how we start a new section in R Markdown. If we used one hashtag, the section heading would be bigger in the output. If we used three (or four) hashtags, the section headings would be smaller (or even smaller) in the output, which would be helpful if you have lots of sub- (or sub-sub-) headings.
+
+There's an R Markdown cheat sheet in the pages folder on Canvas that has much more info on how to use R Markdown. Here are a few first day features to get you started:
+
+Wrapping a word in `single backticks` will highlight it when you print.
+
+*Wrapping text in one asterisk will italicize it when you print.*
+
+**Wrapping text in two asterisks will bold it when you print.**
+
+***Wrapping text in three asterisks will bold and italicize it when you print.***
+
+And three (or more) dashes on a single line will create a horizontal rule:
+
+---
+
+Click the "Knit" button in the toolbar to see how this R Markdown file prints as an html document
+
+\pagebreak
