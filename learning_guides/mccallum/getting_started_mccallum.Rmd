@@ -1,0 +1,46 @@
+---
+title: "Getting Started McCallum"
+author: "ML"
+date: "2022-10-11"
+output: html_document
+---
+
+## Load Usual Packages
+
+```{r}
+library(tidyverse)
+```
+
+## Downloading Data
+
+The Cumulative CCES Common Content data file can be downloaded here:
+
+https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi%3A10.7910/DVN/II2DB6
+
+Download the .rds file. You can open it with the `readRDS()` function rather than the `read_csv()` function.
+
+```{r}
+cces <- readRDS("/Users/lawrence/Downloads/cumulative_2006-2021.rds")
+```
+
+The file is huge! Use `filter()` and `select()` to make it smaller.
+
+```{r}
+vermont_cces <- cces |> 
+  filter(year == 2020 & st == "VT") |> 
+  select(year, case_id, st, union_hh, voted_pres_20)
+```
+
+Some code for getting the vote for Joe Biden by union household...
+
+```{r}
+vermont_cces |> 
+  filter(!is.na(voted_pres_20) & !is.na(union_hh)) |> 
+  group_by(union_hh) |>
+  count(voted_pres_20) |> 
+  mutate(n_hh = sum(n),
+         pct = n / n_hh) |> 
+  filter(voted_pres_20 == "Joe Biden")
+```
+
+Any ways to simplify this?

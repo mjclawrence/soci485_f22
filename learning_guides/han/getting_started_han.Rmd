@@ -1,0 +1,100 @@
+---
+title: "Getting Started - Han"
+author: "ML"
+date: "2022-10-11"
+output: html_document
+---
+
+## Loading Usual Packages
+
+```{r}
+library(tidyverse)
+```
+
+## Setting Up Tidycensus
+
+```{r}
+install.packages("tidycensus")
+library(tidycensus)
+census_api_key("YOUR API KEY GOES HERE")
+```
+
+Next time you open this file, you only need the `library(tidycensus)` line. You can put hashtags in front of the install and api key lines.
+
+## Using Tidycensus
+
+To start, let's see all the variables that are in the 2019 American Community Survey 5-Year file. We'll load the variable names and descriptions in a dataframe:
+
+```{r}
+v19 <- load_variables(year = 2019,
+                      dataset = "acs5")
+```
+
+Now view the file, either with the spreadsheet icon in the environment pane or with the `View()` function.
+
+```{r}
+View(v19)
+```
+
+Use the search bar to find the variable for "Median gross rent as a percentage of household income."
+
+Note that the variable names refer to the rows of each table, and the table names correspond to what you would see if you search for the same variable in Census Reporter:
+
+https://censusreporter.org/data/table/?table=B25071&geo_ids=04000US50&primary_geo_id=04000US50
+
+Next you can use the `get_acs()` function to pull the values of that variable for any census geographic level. We'll use `zcta` for *zip code tabulation area* which also requires a state abbreviation.
+
+```{r}
+vermont_zips <- get_acs(geography = "zcta",
+                        state = "VT",
+                        variables = "B25071_001")
+```
+
+You'll get an error if that's all you put. The error is because zip code level data is not available for 2021 (the current default year)
+or 2020. Add 2019 as the year and specify the survey
+
+```{r}
+vermont_zips <- get_acs(geography = "zcta",
+                        state = "VT",
+                        variables = "B25071_001",
+                        year = 2019,
+                        survey = "acs5")
+```
+
+Now you have a dataframe to work with!
+
+## Nice to know
+
+You can pull multiple variables at once with the `c()` function.
+
+```{r}
+vermont_zips <- get_acs(geography = "zcta",
+                        state = "VT",
+                        variables = c("B25071_001",
+                                      "B01001_001"),
+                        year = 2019,
+                        survey = "acs5")
+```
+
+Once you have multiple variables, you might want to change the name of the variable when you pull the data.
+
+```{r}
+vermont_zips <- get_acs(geography = "zcta",
+                        state = "VT",
+                        variables = c(rent_income_pct = "B25071_001",
+                                      population_total = "B01001_001"),
+                        year = 2019,
+                        survey = "acs5")
+```
+
+The default output is the `tidy` format with all the variables in a column called `variable`. You'll end up with a row for each variable for each zip code in this format. To make each variable a separate column, change the output option to `wide`:
+
+```{r}
+vermont_zips <- get_acs(geography = "zcta",
+                        state = "VT",
+                        variables = c(rent_income_pct = "B25071_001",
+                                      population_total = "B01001_001"),
+                        year = 2019,
+                        survey = "acs5",
+                        output = "wide")
+```

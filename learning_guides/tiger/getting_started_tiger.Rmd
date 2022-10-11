@@ -1,0 +1,36 @@
+---
+title: "Getting Started - Tiger"
+author: "ML"
+date: "2022-10-11"
+output: html_document
+---
+
+## Downloading Data
+
+Waves are here: https://www.pewresearch.org/american-trends-panel-datasets/
+
+Remember the codebook for demographic profile variables: https://www.pewresearch.org/wp-content/uploads/2018/05/Codebook-and-instructions-for-working-with-ATP-data.pdf
+
+## Loading Usual Packages
+
+```{r}
+library(tidyverse)
+```
+
+
+## Loading Data
+
+The downloaded data is in .sav format. Use the `haven` package to open it. First install and load the package...
+
+```{r}
+install.packages("haven") # Put a hastag in front of this line after installing
+library(haven)
+```
+
+Then use `read_sav()` rather than `read_csv()` to load the file.
+
+```{r}
+w74 <- read_sav("/Users/lawrence/Downloads/W74_Sep20 2/ATP W74.sav")
+```
+
+

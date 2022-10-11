@@ -65,3 +65,13 @@ And three (or more) dashes on a single line will create a horizontal rule:
 Click the "Knit" button in the toolbar to see how this R Markdown file prints as an html document
 
 \pagebreak
+
+## Installing Packages
+
+We will use the `tidyverse` package extensively. Install it and then load it with the `library()` function.
+
+```{r}
+install.packages("tidyverse") # Put hashtag in front of this after installing
+library(tidyverse)
+```
+
