@@ -460,6 +460,170 @@ rule:</p>
 file prints as an html document</p>
 <div style="page-break-after: always;"></div>
 </div>
+<div id="installing-packages" class="section level2">
+<h2>Installing Packages</h2>
+<p>We will use the <code>tidyverse</code> package extensively. Install
+it and then load it with the <code>library()</code> function.</p>
+<pre class="r"><code>#install.packages(&quot;tidyverse&quot;) # Put hashtag in front of this after installing
+library(tidyverse)</code></pre>
+<pre><code>## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──</code></pre>
+<pre><code>## ✔ ggplot2 3.3.6     ✔ purrr   0.3.4
+## ✔ tibble  3.1.7     ✔ dplyr   1.0.9
+## ✔ tidyr   1.2.0     ✔ stringr 1.4.0
+## ✔ readr   2.1.2     ✔ forcats 0.5.1</code></pre>
+<pre><code>## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()</code></pre>
+</div>
+<div id="loading-data" class="section level2">
+<h2>Loading Data</h2>
+<p>For this workshop, we will use the <code>read_csv()</code> function
+to load our data. Some of the groups will end up using different
+functions, but this is the most straightforward.</p>
+<div id="lets-start-with-professor-hans-team-using-american-community-survey-data." class="section level3">
+<h3>Let’s start with Professor Han’s team using American Community
+Survey data.</h3>
+<pre class="r"><code>vermont_zips &lt;- read_csv(&quot;https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/vermont_zips.csv&quot;)</code></pre>
+<pre><code>## Rows: 255 Columns: 5
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (3): GEOID, NAME, variable
+## dbl (2): estimate, moe
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<p>We have a row for each Vermont zip code. The variable is from the
+census table B25071 which is “median gross rent as a percentage of
+household income.” Let’s look at the distribution of this variable using
+the <code>summary()</code> function.</p>
+<pre class="r"><code>summary(vermont_zips$estimate)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s 
+##    9.00   24.00   28.20   29.50   32.55   51.00      31</code></pre>
+<p>And now let’s pull the variable only for Middlebury’s zip code
+(05753)</p>
+<pre class="r"><code>vermont_zips$estimate[vermont_zips$GEOID==&quot;05753&quot;]</code></pre>
+<pre><code>## [1] 29.3</code></pre>
+<p>This also works:</p>
+<pre class="r"><code>vermont_zips |&gt; 
+  filter(GEOID == &quot;05753&quot;) |&gt; # To choose the rows of the dataframe
+  select(GEOID, estimate) # To choose the columns of the dataframe</code></pre>
+<pre><code>## # A tibble: 1 × 2
+##   GEOID estimate
+##   &lt;chr&gt;    &lt;dbl&gt;
+## 1 05753     29.3</code></pre>
+</div>
+<div id="now-an-example-from-professor-mccallums-election-data" class="section level3">
+<h3>Now an example from Professor McCallum’s election data</h3>
+<pre class="r"><code>vermont_cces &lt;- read_csv(&quot;https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/vermont_cces.csv&quot;)</code></pre>
+<pre><code>## Rows: 150 Columns: 5
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (2): st, voted_pres_20
+## dbl (3): year, case_id, union_hh
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<p>Let’s see what the distribution of union households is</p>
+<pre class="r"><code>table(vermont_cces$union_hh)</code></pre>
+<pre><code>## 
+##   1   2   3 
+##  19  16 114</code></pre>
+<p>We know from the codebook that 1 = “Yes, Currently”, 2 = “Yes,
+Formerly”, and 3 = “No, Never”. Let’s create a new variable which will
+be a factor variable based on the existing union_hh variable with those
+category labels.</p>
+<pre class="r"><code>vermont_cces &lt;- vermont_cces |&gt; 
+  mutate(union_hh_cat = factor(union_hh,
+                               labels = c(&quot;Yes, Currently&quot;,
+                                          &quot;Yes, Formerly&quot;,
+                                          &quot;No, Never&quot;)))</code></pre>
+<p>And make a table with this new variable:</p>
+<pre class="r"><code>table(vermont_cces$union_hh_cat)</code></pre>
+<pre><code>## 
+## Yes, Currently  Yes, Formerly      No, Never 
+##             19             16            114</code></pre>
+<p>What proportion of households are in each category?</p>
+<pre class="r"><code>prop.table(table(vermont_cces$union_hh_cat))</code></pre>
+<pre><code>## 
+## Yes, Currently  Yes, Formerly      No, Never 
+##      0.1275168      0.1073826      0.7651007</code></pre>
+<p>Let’s make one more variable - a binary variable - identifying
+households with any union status. Read this as: mutate to create a new
+variable called <code>union_hh_any</code>. If the string “Yes” is
+detected in the value of union_hh_cat, the value of union_hh_any should
+be 1. If the string detects anything else instead, the value of
+union_hh_any should be 0.</p>
+<pre class="r"><code>vermont_cces &lt;- vermont_cces |&gt; 
+  mutate(union_hh_any = ifelse(str_detect(union_hh_cat, &quot;Yes&quot;), 1, 0))</code></pre>
+<p>Now that we have a binary variable, we can use summary to work with
+easily. The mean of a binary variable is the proportion with a 1, so the
+mean from the summary below tells us the proportion of households in
+Vermont that currently or formerly have union members.</p>
+<pre class="r"><code>summary(vermont_cces$union_hh_any)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s 
+##  0.0000  0.0000  0.0000  0.2349  0.0000  1.0000       1</code></pre>
+</div>
+<div id="finally-professor-tiger" class="section level3">
+<h3>Finally, Professor Tiger</h3>
+<pre class="r"><code>pew_w74 &lt;- read_csv(&quot;https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/pew_w74.csv&quot;)</code></pre>
+<pre><code>## Rows: 9535 Columns: 4
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## dbl (4): QKEY, F_GENDER, JOKE1_W74, CANCUL1_W74
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<p>We’ll try a cross-tabulation this time. The <code>F_GENDER</code>
+variable takes the values of 1 for “Man” and 2 for “Woman”. What is the
+distribution of gender?</p>
+<pre class="r"><code>table(pew_w74$F_GENDER)</code></pre>
+<pre><code>## 
+##    1    2 
+## 4359 5176</code></pre>
+<p>Let’s see how the distribution of responses to the cancel culture
+question vary by gender. The wording of <code>CANCUL1</code> is: “In
+general, when people publicly call out others on social media for
+posting content that might be considered offensive, are they more likely
+to…”. The possible responses are:</p>
+<p>1: Hold people accountable for their actions 2: Punish people who
+didn’t deserve it</p>
+<p>For a cross-tabulation, include both variables in the table
+function:</p>
+<pre class="r"><code>table(pew_w74$F_GENDER, pew_w74$CANCUL1_W74)</code></pre>
+<pre><code>##    
+##        1    2
+##   1 2478 1881
+##   2 3565 1611</code></pre>
+<p>Those are frequencies. Wrap the table in <code>prop.table()</code>
+for proportions.</p>
+<pre class="r"><code>prop.table(table(pew_w74$F_GENDER, pew_w74$CANCUL1_W74))</code></pre>
+<pre><code>##    
+##             1         2
+##   1 0.2598846 0.1972732
+##   2 0.3738857 0.1689565</code></pre>
+<p>Those are cell frequencies. Add a <code>,1</code> to get row
+proportions and a <code>,2</code> to get column proportions.</p>
+<pre class="r"><code>prop.table(table(pew_w74$F_GENDER, pew_w74$CANCUL1_W74),1)</code></pre>
+<pre><code>##    
+##             1         2
+##   1 0.5684790 0.4315210
+##   2 0.6887558 0.3112442</code></pre>
+<p>This also works if you want to stay within the tidyverse…</p>
+<pre class="r"><code>pew_w74 |&gt; 
+  group_by(F_GENDER) |&gt; 
+  count(CANCUL1_W74) |&gt; 
+  mutate(gender_total = sum(n),
+         gender_prop = n/gender_total)</code></pre>
+<pre><code>## # A tibble: 4 × 5
+## # Groups:   F_GENDER [2]
+##   F_GENDER CANCUL1_W74     n gender_total gender_prop
+##      &lt;dbl&gt;       &lt;dbl&gt; &lt;int&gt;        &lt;int&gt;       &lt;dbl&gt;
+## 1        1           1  2478         4359       0.568
+## 2        1           2  1881         4359       0.432
+## 3        2           1  3565         5176       0.689
+## 4        2           2  1611         5176       0.311</code></pre>
+</div>
+</div>
 
 
 
