@@ -1,3 +1,9 @@
+---
+title: "Getting Started - Han"
+author: "ML"
+output: html_output
+---
+
 ## Loading Usual Packages
 
 ```{r}
@@ -7,13 +13,10 @@ library(tidyverse)
 ## Setting Up Tidycensus
 
 ```{r}
-install.packages("tidycensus")
+#install.packages("tidycensus")
 library(tidycensus)
-census_api_key("YOUR API KEY GOES HERE")
+#census_api_key("YOUR API KEY GOES HERE", install = TRUE, overwrite = TRUE)
 ```
-
-Next time you open this file, you only need the `library(tidycensus)` line. You can put hashtags in front of the install and api key lines.
-
 ## Using Tidycensus
 
 To start, let's see all the variables that are in the 2019 American Community Survey 5-Year file. We'll load the variable names and descriptions in a dataframe:
@@ -37,7 +40,7 @@ https://censusreporter.org/data/table/?table=B25071&geo_ids=04000US50&primary_ge
 
 Next you can use the `get_acs()` function to pull the values of that variable for any census geographic level. We'll use `zcta` for *zip code tabulation area* which also requires a state abbreviation.
 
-```{r}
+```{r, eval = FALSE}
 vermont_zips <- get_acs(geography = "zcta",
                         state = "VT",
                         variables = "B25071_001")
