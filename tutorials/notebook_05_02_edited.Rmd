@@ -1,39 +1,3 @@
----
-title: "Intrdoucing Datatable"
-author: "ML"
-date: "2022-10-13"
-output: html_document
----
-
-```{r}
-library(tidyverse)
-cces <- readRDS("/Users/lawrence/Downloads/cumulative_2006-2021.rds")
-```
-
-
-```{r}
-library(DT)
-cces <- cces |> 
-  select(year, case_id, st, union_hh, voted_pres_20)
-
-cces2 <- cces |> 
-  filter(!is.na(voted_pres_20) & !is.na(union_hh)) |> 
-  mutate(union_hh = factor(union_hh,
-                           labels = c("union_hh_current",
-                                      "union_hh_former",
-                                      "union_hh_none"))) |> 
-  group_by(st, union_hh) |>
-  count(voted_pres_20) |> 
-  mutate(n_hh = sum(n),
-         pct = n / n_hh) |> 
-  filter(voted_pres_20 == "Joe Biden") |> 
-  select(-c("n", "n_hh")) |> 
-  pivot_wider(names_from = "union_hh", values_from = "pct") |> 
-  datatable(extensions = 'Buttons', 
-            options = list(dom = 'Bftip', 
-                           buttons = c('copy', 'csv', 'pdf', 'print')))
-```
-
 ## Setting Up
 
 Load the usual packages
@@ -69,19 +33,6 @@ This dataset shows the proportion of votes for Joe Biden in the 2020 presidentia
 summary(cces$union_hh_current)
 ```
 
-```{r}
-cces |> 
-  ggplot(aes(x = union_hh_current)) + geom_density()
-```
-
-
-```{r}
-cces |> 
-  pivot_longer(names_to = "union_hh",
-               values_to = "prop", 3:5) |> 
-  ggplot(aes(x = union_hh, y = prop, fill = union_hh)) + geom_col()
-```
-
 The most basic interactive table only requires the `datatable()` function:
 
 ```{r}
@@ -111,19 +62,6 @@ cces |>
 ```
 
 
-
-### REPLACE THIS LINE WITH YOUR CODE
-
-```{r}
-cces |> 
-  select(-voted_pres_20) |>
-  mutate(across(where(is.numeric), round, 3)) |>  
-  datatable(rownames = FALSE,
-            colnames = c("State", "Current Union Member",
-                         "Former Union Member", "No Union Member"),
-            filter = "top",
-            caption = c("A Better Title"))
-```
 
 ### Buttons
 
