@@ -1,0 +1,68 @@
+## Setting Up
+
+Load the usual packages
+
+```{r}
+library(tidyverse)
+```
+
+
+## Interactive Tables
+
+Our learning guides will end up including interactive tables and figures created in Datawrapper. But it is also possible to create interactive tables within R. These can be used in shiny apps and R publications. They can also be helpful when you are exploring your data.
+
+## The Datatable Package
+
+One particularly good package for interactive tables is the datatable package (`DT`). Let's install and load it.
+
+```{r}
+install.packages("DT") # hashtag this line after installing.
+library(DT)
+```
+
+
+We'll use the union election data for this example. 
+
+```{r}
+cces <- read_csv("https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/cces_union_2020.csv")
+```
+
+This dataset shows the proportion of votes for Joe Biden in the 2020 presidential election by state and by union household status. What is the distribution of proportions in current union households?
+
+### REPLACE THIS LINE WITH YOUR CODE
+
+The most basic interactive table only requires the `datatable()` function:
+
+```{r}
+cces |> 
+  datatable()
+```
+
+
+How else could we improve this?
+
+Let's try to remove the `voted_pres_20` column, round the proportions, get rid of the row numbers, change the column names, add filters above each column, and add a title. 
+
+### REPLACE THIS LINE WITH YOUR CODE
+
+
+
+### Buttons
+
+During the data exploration phase, it can be very useful to get data out of R. There are lots of ways to do this. The button extensions in the DT package are one neat way to do so.
+
+```{r}
+cces |> 
+  datatable(extensions = 'Buttons', options = list(
+    dom = 'Bftip', # see explanation below
+    buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
+  ))
+```
+
+B = Buttons
+f = search box
+t = table
+i = table information
+p = pagination
+
+
