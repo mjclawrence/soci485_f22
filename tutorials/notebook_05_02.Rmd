@@ -41,8 +41,6 @@ cces |>
 
 How else could we improve this?
 
-Let's try to remove the `voted_pres_20` column, round the proportions, get rid of the row numbers, change the column names, add filters above each column, and add a title. 
-
 ### REPLACE THIS LINE WITH YOUR CODE
 
 
