@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "Intrdoucing Datatable"
 author: "ML"
 date: "2022-10-13"
 output: html_document
@@ -52,7 +52,7 @@ Our learning guides will end up including interactive tables and figures created
 One particularly good package for interactive tables is the datatable package (`DT`). Let's install and load it.
 
 ```{r}
-install.packages("DT") # hashtag this line after installing.
+#install.packages("DT") # hashtag this line after installing.
 library(DT)
 ```
 
