@@ -97,10 +97,11 @@ Let's try to remove the `voted_pres_20` column, round the proportions, get rid o
 ```{r}
 cces |> 
   select(!voted_pres_20) |> 
-  mutate(union_hh_current = union_hh_current * 100,
-         union_hh_former = union_hh_former * 100,
-         union_hh_none = union_hh_none * 100) |>
-  mutate(across(where(is.numeric),round,2)) |> 
+  #mutate(union_hh_current = union_hh_current * 100,
+  #      union_hh_former = union_hh_former * 100,
+  #       union_hh_none = union_hh_none * 100) |>
+  #mutate(across(where(is.numeric), round, 2)) |> 
+  mutate(across(where(is.numeric), ~ round(.x*100,2))) |> 
   datatable(rownames = FALSE,
             colnames = c("State",
                          "Current Union Member",

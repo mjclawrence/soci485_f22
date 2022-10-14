@@ -47,11 +47,26 @@ Let's try to remove the `voted_pres_20` column, round the proportions, get rid o
 
 ```{r}
 cces |> 
-  select(!voted_pres_20) |> 
-  mutate(union_hh_current = union_hh_current * 100,
+  select(-voted_pres_20) |> # To remove the voted_pres_20 column
+  mutate(union_hh_current = union_hh_current * 100, # To change proportions to percents
          union_hh_former = union_hh_former * 100,
          union_hh_none = union_hh_none * 100) |>
-  mutate(across(where(is.numeric),round,2)) |> 
+  mutate(across(where(is.numeric),round,2)) |> # To round percents
+  datatable(rownames = FALSE, # Remove row indexes
+            colnames = c("State", # Change column names
+                         "Current Union Member",
+                         "Former Union Member",
+                         "No Union Member"),
+            filter = "top", # Add search bar above each column
+            caption = "Percent Voting For Joe Biden In 2020 Presidential Election By Household Union Status And State") # Add title
+```
+
+This also works...
+
+```{r}
+cces |> 
+  select(-voted_pres_20) |> 
+  mutate(across(where(is.numeric), ~ round(.x*100,2))) |>
   datatable(rownames = FALSE,
             colnames = c("State",
                          "Current Union Member",
@@ -61,15 +76,13 @@ cces |>
             caption = "Percent Voting For Joe Biden In 2020 Presidential Election By Household Union Status And State")
 ```
 
-
-
 ### Buttons
 
 During the data exploration phase, it can be very useful to get data out of R. There are lots of ways to do this. The button extensions in the DT package are one neat way to do so.
 
 ```{r}
 cces |> 
-  select(!voted_pres_20) |> 
+  select(-voted_pres_20) |> 
   mutate(union_hh_current = union_hh_current * 100,
          union_hh_former = union_hh_former * 100,
          union_hh_none = union_hh_none * 100) |>

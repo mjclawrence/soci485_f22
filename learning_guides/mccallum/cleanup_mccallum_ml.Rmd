@@ -1,0 +1,63 @@
+---
+title: "Untitled"
+author: "ML"
+date: "2022-10-13"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+
+cces <- readRDS("/Users/lawrence/Downloads/cumulative_2006-2021.rds")
+```
+
+
+```{r}
+cces_2020 <- cces |> 
+  filter(!is.na(voted_pres_20) & !is.na(union_hh)) |> 
+  group_by(st, union_hh) |>
+  count(voted_pres_20) |> 
+  mutate(n_hh = sum(n),
+         pct = n / n_hh) |> 
+  filter(voted_pres_20 == "Joe Biden") |> 
+  mutate(year = "2020")
+```
+
+```{r}
+cces_2016 <- cces |> 
+  filter(!is.na(voted_pres_16) & !is.na(union_hh)) |> 
+  group_by(st, union_hh) |>
+  count(voted_pres_16) |> 
+  mutate(n_hh = sum(n),
+         pct = n / n_hh) |> 
+  filter(voted_pres_16 == "Hilary Clinton") |> 
+  mutate(year = "2016")
+```
+
+```{r}
+cces_2012 <- cces |> 
+  filter(!is.na(voted_pres_12) & !is.na(union_hh)) |> 
+  group_by(st, union_hh) |>
+  count(voted_pres_12) |> 
+  mutate(n_hh = sum(n),
+         pct = n / n_hh) |> 
+  filter(voted_pres_12 == "Barack Obama") |> 
+  mutate(year = "2012")
+```
+
+```{r}
+cces_2012_2020 <- bind_rows(cces_2012, cces_2016, cces_2020)
+```
+
+```{r}
+cces_2012_2020 |> 
+  select(!starts_with("voted_pres")) |> 
+  select(!c("n", "n_hh")) |> 
+  pivot_wider(names_from = "union_hh", values_from = pct) |> 
+  datatable(colnames = c("State",
+                         "Year",
+                         "Current Union Member",
+                         "Former Union Member",
+                         "No Union Member"))
+```
+
