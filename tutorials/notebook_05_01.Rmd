@@ -174,7 +174,7 @@ Those are frequencies. Wrap the table in `prop.table()` for proportions.
 prop.table(table(pew_w74$F_GENDER, pew_w74$CANCUL1_W74))
 ```
 
-Those are cell proportions Add a `,1` to get row proportions and a `,2` to get column proportions.
+Those are cell proportions. Add a `,1` to get row proportions and a `,2` to get column proportions.
 
 ```{r}
 prop.table(table(pew_w74$F_GENDER, pew_w74$CANCUL1_W74),1)
