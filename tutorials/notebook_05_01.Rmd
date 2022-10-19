@@ -139,7 +139,7 @@ vermont_cces <- vermont_cces |>
   mutate(union_hh_any = ifelse(str_detect(union_hh_cat, "Yes"), 1, 0))
 ```
 
-Now that we have a binary variable, we can use summary to work with easily. The mean of a binary variable is the proportion with a 1, so the mean from the summary below tells us the proportion of households in Vermont that currently or formerly have union members.
+Now that we have a binary variable, we can use summary to work with it easily. The mean of a binary variable is the proportion with a 1, so the mean from the summary below tells us the proportion of households in Vermont that currently or formerly have union members.
 
 ```{r}
 summary(vermont_cces$union_hh_any)
@@ -174,7 +174,7 @@ Those are frequencies. Wrap the table in `prop.table()` for proportions.
 prop.table(table(pew_w74$F_GENDER, pew_w74$CANCUL1_W74))
 ```
 
-Those are cell frequencies. Add a `,1` to get row proportions and a `,2` to get column proportions.
+Those are cell proportions Add a `,1` to get row proportions and a `,2` to get column proportions.
 
 ```{r}
 prop.table(table(pew_w74$F_GENDER, pew_w74$CANCUL1_W74),1)
