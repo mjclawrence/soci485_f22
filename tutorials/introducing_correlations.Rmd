@@ -1,0 +1,40 @@
+---
+title: "Introducing Correlations"
+author: "ML"
+date: "2022-10-20"
+output: html_document
+---
+
+## Load the usual packages
+```{r}
+library(tidyerse)
+library(tidycensus)
+```
+
+We'll also end up using the weights package. Install and load it.
+
+```{r}
+install.packages("weights") # hashtag this line after installing
+library(weights)
+```
+
+## Loading the data
+
+I put the most recent version of your compiled dataset on Github just to make this notebook easier. This version doesn't have Albert's variables yet.
+
+```{r}
+
+```
+
+
+
+han_subset <- han |> 
+  relocate(xsite, .after = "NAME") |> 
+  relocate(evict_pct, .after = "xsite") |> 
+  rename(population = Total.PopulationmE) |> 
+  relocate(population, .after = "xsite") |> 
+  relocate(majority_race, .after = population) |> 
+  select(GEOID:other_pct) |> 
+  group_by(xsite) |> 
+  summarise(across(median_hh_income:other_pct,
+                   ~ wtd.cor(.x, evict_pct, weight = population)[1]))

@@ -1,0 +1,118 @@
+---
+title: "getting started _tiger"
+author: "Kayla Buchanan"
+date: "2022-10-11"
+output: pdf_document
+---
+
+## Downloading Data
+
+Waves are here: https://www.pewresearch.org/american-trends-panel-datasets/
+
+Remember the codebook for demographic profile variables: https://www.pewresearch.org/wp-content/uploads/2018/05/Codebook-and-instructions-for-working-with-ATP-data.pdf
+
+## Loading Usual Packages
+
+```{r}
+library(tidyverse)
+```
+
+
+## Loading Data
+
+The downloaded data is in .sav format. Use the `haven` package to open it. First install and load the package...
+
+```{r}
+#install.packages("haven") # Put a hastag in front of this line after installing
+library(haven)
+```
+
+Then use `read_sav()` rather than `read_csv()` to load the file.
+#Reading in Wave 74 & Wave 92
+```{r}
+w74 <- read_sav("../../data/ATP W74.sav")
+
+w92 <- read_sav("../../data/ATP W92.sav")
+
+names(w92)
+
+
+```
+
+
+
+```{r}
+table(w74$F_GENDER)
+```
+
+
+```{r}
+w74 <- w74 |> select(QKEY, F_CDIVISION,F_EDUCCAT2, F_IDEO, F_GENDER, F_RACETHNMOD, SNSUSE_W74, AVOIDPT1_W74,AVOIDPT2_a_W74,AVOIDPT2_b_W74,AVOIDPT2_c_W74,AVOIDPT2_d_W74,AVOIDPT2_e_W74,CANCUL1_W74,CANCUL2_W74, starts_with("WEIGHT"))
+
+
+w92 <- w92 |> select(QKEY,CRIM_SENT2_W92, starts_with("WEIGHT"))
+
+
+w74_92 <- left_join(w74, w92) %>% 
+  filter(!is.na(WEIGHT_W92))
+
+avoid_labels <- c("Major", "Minor", "Not")
+
+w74_92 <- w74_92 |>
+     mutate(education = factor(F_EDUCCAT2,
+                             levels = c(1, 2, 3, 4,5,6, 99),
+                             labels = c("Less Than High School", "High School Graduate","Some College",
+                                        "Associate's Degree","College graduate","Postgraduate", "NA")),
+            division = factor(F_CDIVISION,
+                           levels = c(9,8,7,6,5,4,3, 2, 1),
+                           labels = c("Pacific", 
+                                      "Mountain", "West South Central", "East South Central", "South Atlantic", "West North Central", "East North Central", "Middle Atlantic", "New England")),
+            ideology = factor(F_IDEO, 
+                              levels = c(1, 2, 3, 4,5), 
+                              labels = c("Very Conservative", "Conservative","Moderate","Liberal","Very Liberal")), 
+              gender = factor(F_GENDER, 
+                              levels = c(1, 2, 3, 99), 
+                              labels = c("Man", "Woman","Other","Refused to Answer")), 
+              race = factor(F_RACETHNMOD, 
+                              levels = c(1, 2, 3, 4,5, 99), 
+                              labels = c("White", "Black","Hispanic","Other","Asian","Refused")), 
+            socialmedia = factor(SNSUSE_W74,
+                                 levels = c(1, 2),
+                                 labels = c("Uses Social Media", "Does not Use Social Media")), 
+            avoid_post = factor(AVOIDPT1_W74,
+                                levels = c(1 , 2 , 3 , 4) , 
+                                labels = c("Often", "Sometimes","Rarely", "Never")),
+            cancul1 = factor(CANCUL1_W74, 
+                             levels = c(1,2), 
+                             labels = c("Accountable", "Punish")), 
+            cancul2 = factor(CANCUL2_W74, 
+                             levels = c(1, 2, 3, 4),
+                             labels = c("A great deal", "A fair amount", "Not too much", "None at all")),
+            avoida = factor(AVOIDPT2_a_W74,
+                            levels = c(1, 2,3), 
+                            labels = avoid_labels),
+            avoidb = factor(AVOIDPT2_b_W74,
+                            levels = c(1, 2,3), 
+                            labels = avoid_labels), 
+            avoidc = factor(AVOIDPT2_c_W74,
+                            levels = c(1, 2,3), 
+                            labels = avoid_labels),
+            avoidd = factor(AVOIDPT2_d_W74,
+                            levels = c(1, 2,3), 
+                            labels = avoid_labels), 
+            avoide = factor(AVOIDPT2_e_W74,
+                            levels = c(1, 2,3), 
+                            labels = avoid_labels))
+            
+            
+
+
+
+
+
+
+
+
+```
+
+
