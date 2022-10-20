@@ -6,6 +6,7 @@ output: html_document
 ---
 
 ## Load the usual packages
+
 ```{r}
 library(tidyerse)
 library(tidycensus)
@@ -20,21 +21,120 @@ library(weights)
 
 ## Loading the data
 
-I put the most recent version of your compiled dataset on Github just to make this notebook easier. This version doesn't have Albert's variables yet.
+I put the most recent version of your compiled dataset on Github just to make this notebook easier. This version doesn't have Albert's variables yet so you won't want to use it beyond this notebook.
 
 ```{r}
-
+han <- read_csv("https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/han_v1.csv")
 ```
 
+## Correlations
+
+A correlation coefficient measures how two variables tend to move together. They can range from -1 to 1 and always have *sign* and *strength*. Sign is either positive (greater than 0) or negative (less than 0). Strength is how tightly the two variables are associated. There's no perfect definition of strength, but in general correlations above .5 (if positive) or below -.5 (if negative) are considered strong.
+
+To find correlations in R, use the `cor()` function and list the two variables. For example, for the correlation between eviction rate and median household income...
+
+```{r}
+cor(han$evict_pct, han$median_hh_income)
+```
+
+You'll often get NA as the response. That means that there is at least one observation in your dataset missing values for at least one of your variables. Add the `, use = "complete"` option to restrict the dataset to observations that are complete on both variables:
+
+```{r}
+cor(han$evict_pct, han$median_hh_income, use = "complete")
+```
+
+Remember sign and strength. This is a negative relationship: zip codes with higher median household incomes tend to have lower eviction rates. Makes sense. And the strength is moderate...not high enough to be strong but certainly picking up some association between these variables.
+
+The correlation coefficient is a summary measure of the distribution of both variables. It's often helpful to visualize those distributions in a scatterplot. Here we'll use the geom_point() function. (More on these plots next week.)
+
+```{r}
+han |> 
+  ggplot(aes(x = median_hh_income, y = evict_pct)) + geom_point()
+```
+
+This plot really captures the negative association with its downward "swoop" from the top left to the bottom right. Zip codes with median hh income below the mean for that variable tend to have eviction rates above the mean for that variable.
 
 
-han_subset <- han |> 
+## Correlations By City
+
+We have seen indexing as a way to run functions over subsets of the dataset. For example, if we wanted the correlation between median household income and eviction rates only in Philadelphia, we could use...
+
+```{r}
+cor(han$median_hh_income[han$xsite=="PHILADELPHIA"],
+    han$evict_pct[han$xsite=="PHILADELPHIA"],
+    use = "complete")
+```
+
+So a much stronger relationship between these two variables in Philadelphia! We can see that in the scatterplot as well...
+
+```{r}
+han |> 
+  filter(xsite == "PHILADELPHIA") |>  # filter to choose the rows we want
+  ggplot(aes(x = median_hh_income, y = evict_pct)) + geom_point()
+```
+
+It would be pretty annoying to have to use indexing for every city. And for every variable. Let's try to speed this up...
+
+## Correlations Across Multiple Variables
+
+Our shortcut is going to require the columns to be in a certain order. Specifically, we need all the variables that we will want to correlate with `evict_pct` to be sequential. Let's move everything else to the front of the dataset using the `relocate()` function.
+
+```{r}
+han <- han |> 
   relocate(xsite, .after = "NAME") |> 
   relocate(evict_pct, .after = "xsite") |> 
-  rename(population = Total.PopulationmE) |> 
   relocate(population, .after = "xsite") |> 
-  relocate(majority_race, .after = population) |> 
-  select(GEOID:other_pct) |> 
-  group_by(xsite) |> 
-  summarise(across(median_hh_income:other_pct,
-                   ~ wtd.cor(.x, evict_pct, weight = population)[1]))
+  relocate(majority_race, .after = population)
+```
+
+We'll put the new correlations in a dataframe called `evict_correlations`. We are going to run our correlations for each city (coded in the `xsite` variable...you'll probably want to rename that at some point) using the `group_by()` function.
+
+The breakthrough here is using the summarise function across multiple columns. This is similar to what we saw last week with mutate across. This time the value we want to summarise for each city is the correlation between the eviction rate and each variable included in our across function. Because we moved all the variables to be consecutive columns, we can quickly identify them by saying we want to summarise across all the columns from `median_hh_income` through `other_pct`.
+
+```{r}
+evict_correlations <- han |> 
+  group_by(xsite) |>  # Do something to each value of the xsite variable 
+  summarise(across(
+    median_hh_income:other_pct, # the varaibles to correlate with eviction
+                   ~ cor(.x, # this will run the cor function across each column we identified
+                         evict_pct, # each column will correlate with evict_pct
+                         use = "complete" # still need this or we'll get NAs!
+                         )))
+```
+
+Check out the new dataset to see what we have now...
+
+```{r}
+View(evict_correlations)
+```
+
+Pretty cool. Each city is a row and each column is that city's correlation between that variable and the eviction rate.
+
+## Weighted Correlations
+
+The last thing to do is to weight our correlations by the population in each zip code. We already installed and loaded the weights package. Now we'll change cor to wtd.cor and drop the "use = complete" option (it is the default in the wtd.cor function).
+
+```{r}
+evict_correlations <- han |> 
+  group_by(xsite) |>  # Do something to each value of the xsite variable 
+  summarise(across(
+    median_hh_income:other_pct, # the variables to correlate with eviction
+                   ~ wtd.cor(.x, # this will run the wtd.cor function across each column
+                         evict_pct, # each column will correlate with evict_pct
+                         )))
+```
+
+We are getting four columns for each variable. That's because the wtd.cor function returns multiple values: the coefficient, the standard error, and two significance test values. We only want the coefficient so we'll index to keep the first value.
+
+```{r}
+evict_correlations <- han |> 
+  group_by(xsite) |>  # Do something to each value of the xsite variable 
+  summarise(across(
+    median_hh_income:other_pct, # the variables to correlate with eviction
+                   ~ wtd.cor(.x, # this will run the wtd.cor function across each column
+                         evict_pct, # each column will correlate with evict_pct
+                         )[1] # to keep the coefficients only
+    ))
+```
+
+That looks great There's some neat variation across cities that will be fun to explore in your analyses. We will need to pivot this wide dataset to make it long data before using it in Datawrapper, but we can do that next week.
