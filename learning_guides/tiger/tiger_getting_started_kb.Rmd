@@ -45,11 +45,46 @@ names(w92)
 table(w74$F_GENDER)
 ```
 
-
+#Wave 72 (Nesting and Pulling Variables )
 ```{r}
 w74 <- w74 |> select(QKEY, F_CDIVISION,F_EDUCCAT2, F_IDEO, F_GENDER, F_RACETHNMOD, SNSUSE_W74, AVOIDPT1_W74,AVOIDPT2_a_W74,AVOIDPT2_b_W74,AVOIDPT2_c_W74,AVOIDPT2_d_W74,AVOIDPT2_e_W74,CANCUL1_W74,CANCUL2_W74, starts_with("WEIGHT"))
 
+w74 <- w74 |> 
+  mutate(AVOIDPT1_W74 = ifelse(SNSUSE_W74==2, 5, AVOIDPT1_W74))
 
+w74 <- w74 |> 
+  mutate(AVOIDPT2_a_W74 = ifelse (AVOIDPT1_W74<=2, 4, AVOIDPT2_a_W74))
+
+w74 <- w74 |> 
+  mutate(AVOIDPT2_b_W74 = ifelse (AVOIDPT1_W74<=2, 4, AVOIDPT2_b_W74))
+
+
+w74 <- w74 |> 
+  mutate(AVOIDPT2_c_W74 = ifelse (AVOIDPT1_W74<=2, 4, AVOIDPT2_c_W74))
+
+w74 <- w74 |> 
+  mutate(AVOIDPT2_d_W74 = ifelse (AVOIDPT1_W74<=2, 4, AVOIDPT2_d_W74))
+  
+w74 <- w74 |> 
+  mutate(AVOIDPT2_e_W74 = ifelse (AVOIDPT1_W74<=2, 4, AVOIDPT2_e_W74))
+
+w74 <- w74 |> 
+  mutate(AVOIDPT2_a_W74 = ifelse (AVOIDPT1_W74==5, 5, AVOIDPT2_a_W74))
+         
+w74 <- w74 |> 
+  mutate(AVOIDPT2_b_W74 = ifelse (AVOIDPT1_W74==5, 5, AVOIDPT2_b_W74))
+
+w74 <- w74 |> 
+  mutate(AVOIDPT2_c_W74 = ifelse (AVOIDPT1_W74== 5, 5, AVOIDPT2_c_W74))
+
+w74 <- w74 |> 
+  mutate(AVOIDPT2_d_W74 = ifelse (AVOIDPT1_W74== 5, 5, AVOIDPT2_d_W74))
+
+w74 <- w74 |> 
+  mutate(AVOIDPT2_e_W74 = ifelse (AVOIDPT1_W74== 5, 5, AVOIDPT2_e_W74))
+```         
+#Wave 92 + New Dataset (Pulling Variables )      
+```{r}
 w92 <- w92 |> select(QKEY,CRIM_SENT2_W92, starts_with("WEIGHT"))
 
 
@@ -57,6 +92,11 @@ w74_92 <- left_join(w74, w92) %>%
   filter(!is.na(WEIGHT_W92))
 
 avoid_labels <- c("Major", "Minor", "Not")
+
+```
+
+#labelling variables 
+```{r}
 
 w74_92 <- w74_92 |>
      mutate(education = factor(F_EDUCCAT2,
@@ -102,17 +142,87 @@ w74_92 <- w74_92 |>
                             labels = avoid_labels), 
             avoide = factor(AVOIDPT2_e_W74,
                             levels = c(1, 2,3), 
-                            labels = avoid_labels))
-            
-            
-
-
-
-
-
-
-
+                            labels = avoid_labels), 
+            crimsent = factor(CRIM_SENT2_W92, 
+                              levels = c(1,2,3), 
+                              labels = c("Too much time", "Too little time", "About the right amount")))
 
 ```
 
+#Dataset with Categorical Variables + Tables 
+```{r}
+w74_92 <- w74_92 |> 
+  select(QKEY,education, division, ideology, gender, race, socialmedia, avoid_post, cancul1, cancul2, avoida,avoidb, avoidc, avoidd, avoide, crimsent, WEIGHT_W92) 
 
+mytable <- w74_92 |> 
+  filter(cancul1!=99) |> 
+  filter(crimsent!=99) |> 
+  mutate(cancul1 = as.factor(cancul1),
+         crimsent = as.factor(crimsent)) |> 
+  crosstab(cancul1, crimsent, WEIGHT_W92, n = FALSE) |> 
+  pivot_longer(names_to = "crimsent", values_to = "pct", 2:4) |> 
+  mutate(crimsent = factor(crimsent,
+                           levels = c("Too much time",
+                                      "About the right amount",
+                                      "Too little time"))) |> 
+  ggplot(aes(x = cancul1, y = pct, fill = crimsent)) + geom_col() +
+  geom_text(aes(label = round(pct, 2)),
+            position = position_stack(vjust = .5),
+            size = 8) +
+  theme(legend.position = "bottom",
+        axis.text = element_text(size = 16),
+        legend.text = element_text(size = 16)) 
+
+ w74_92 %>% 
+  filter(cancul1!=99) %>% 
+  mutate(cancul1 = as.factor(cancul1)) %>% 
+  crosstab(gender, cancul1, WEIGHT_W92)
+ 
+  w74_92 %>% 
+  filter(crimsent!=99) %>% 
+  mutate(crimsent = as.factor(crimsent)) %>% 
+  crosstab(gender,crimsent, WEIGHT_W92)
+  
+   w74_92 %>% 
+  filter(cancul1!=99) %>% 
+  mutate(cancul1 = as.factor(cancul1)) %>% 
+  crosstab(race, cancul1, WEIGHT_W92)
+ 
+  w74_92 %>% 
+  filter(crimsent!=99) %>% 
+  mutate(crimsent = as.factor(crimsent)) %>% 
+  crosstab(race,crimsent, WEIGHT_W92)
+  
+  
+     w74_92 %>% 
+  filter(cancul1!=99) %>% 
+  mutate(cancul1 = as.factor(cancul1)) %>% 
+  crosstab(division, cancul1, WEIGHT_W92)
+ 
+  w74_92 %>% 
+  filter(crimsent!=99) %>% 
+  mutate(crimsent = as.factor(crimsent)) %>% 
+  crosstab(division,crimsent, WEIGHT_W92)
+  
+     w74_92 %>% 
+  filter(cancul1!=99) %>% 
+  mutate(cancul1 = as.factor(cancul1)) %>% 
+  crosstab(education, cancul1, WEIGHT_W92)
+ 
+  w74_92 %>% 
+  filter(crimsent!=99) %>% 
+  mutate(crimsent = as.factor(crimsent)) %>% 
+  crosstab(education,crimsent, WEIGHT_W92)
+  
+     w74_92 %>% 
+  filter(cancul1!=99) %>% 
+  mutate(cancul1 = as.factor(cancul1)) %>% 
+  crosstab(ideology, cancul1, WEIGHT_W92)
+ 
+  w74_92 %>% 
+  filter(crimsent!=99) %>% 
+  mutate(crimsent = as.factor(crimsent)) %>% 
+  crosstab(ideology,crimsent, WEIGHT_W92)
+  
+  
+```

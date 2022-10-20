@@ -138,3 +138,14 @@ evict_correlations <- han |>
 ```
 
 That looks great. There's some neat variation across cities that will be fun to explore in your analyses. We will need to pivot this wide dataset to make it long data before using it in Datawrapper, but we can do that next week.
+
+```{r}
+library(DT)
+
+evict_correlations |> 
+  datatable(rownames = FALSE, extensions = 'Buttons', options = list(
+    dom = 'Btip', # see explanation below
+    buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+
+```
+
