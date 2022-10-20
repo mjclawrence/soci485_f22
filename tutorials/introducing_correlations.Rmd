@@ -8,7 +8,7 @@ output: html_document
 ## Load the usual packages
 
 ```{r}
-library(tidyerse)
+library(tidyverse)
 library(tidycensus)
 ```
 
@@ -133,8 +133,8 @@ evict_correlations <- han |>
     median_hh_income:other_pct, # the variables to correlate with eviction
                    ~ wtd.cor(.x, # this will run the wtd.cor function across each column
                          evict_pct, # each column will correlate with evict_pct
-                         )[1] # to keep the coefficients only
+                         )[1] # index to keep the coefficients only
     ))
 ```
 
-That looks great There's some neat variation across cities that will be fun to explore in your analyses. We will need to pivot this wide dataset to make it long data before using it in Datawrapper, but we can do that next week.
+That looks great. There's some neat variation across cities that will be fun to explore in your analyses. We will need to pivot this wide dataset to make it long data before using it in Datawrapper, but we can do that next week.
