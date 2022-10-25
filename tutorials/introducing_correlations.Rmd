@@ -149,3 +149,26 @@ evict_correlations |>
 
 ```
 
+
+## Mock up of dot plot
+
+```{r}
+dots <- han |> 
+  group_by(xsite, majority_race) |> 
+  summarise(mean = wtd.mean(evict_pct, population))
+```
+
+```{r}
+dots |> 
+  group_by(xsite) |> 
+  mutate(max_rate = max(mean)) |> 
+  ungroup() |> 
+  arrange(max_rate) |> 
+  ggplot(aes(y = reorder(xsite, -max_rate), x = mean, color = majority_race)) +
+  geom_point(size = 2) + 
+  theme(legend.position = "bottom") + 
+  labs(title = "Weighted Eviction Rate By Majority Race In Zip Codes",
+       x = "Eviction Rate", 
+       y = "", 
+       color = "Majority Race")
+```

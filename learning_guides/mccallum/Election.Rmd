@@ -1,0 +1,60 @@
+---
+title: "Election"
+author: "Grace Aronsohn"
+date: "2022-10-20"
+output: html_document
+---
+
+## Load usual packages
+
+```{r}
+library(tidyverse)
+#install.packages("weights") # May need to install this package. Put hashtag in front after installing.
+library(weights)
+```
+
+## Load 2006-2021 Cumulative File
+```{r}
+#cces <- read_csv("/Users/gracearonsohn/Desktop/soci485_f22/data/cces/cces_08_20.csv")
+
+cces <- read_csv("../../data/cces_08_20.csv")
+```
+
+## Add column for difference between union_hh_no and union_hh_yes
+```{r}
+cces <- cces |>
+  mutate(difference_union_vs_non_union = union_hh_yes - union_hh_no)
+```
+
+## Add columns for absolute change and percent change since last election (union_hh_yes)
+```{r}
+cces <- cces |>
+  group_by(state) |>
+  mutate(abs_change_union = (union_hh_yes - lag(union_hh_yes))) |>
+  mutate(pct_change_union = (union_hh_yes / lag(union_hh_yes) - 1) * 100)
+```
+
+## Add columns for absolute change and percent change since last election (union_hh_no)
+```{r}
+cces <- cces |>
+  group_by(state) |>
+  mutate(abs_change_non_union = (union_hh_no - lag(union_hh_no))) |>
+  mutate(pct_change_non_union = (union_hh_no / lag(union_hh_no) - 1) * 100)
+```
+
+```{r}
+cces_20_16 <- cces |> 
+  filter(year == 2008 | year == 2020) |> 
+  select(state, year, difference_union_vs_non_union) |> 
+  pivot_wider(names_from = "year",
+              values_from = "difference_union_vs_non_union") |> 
+  mutate(change_20_16 = `2020` - `2008`)
+```
+
+```{r}
+cces_20_16 |> 
+  ggplot(aes(x = reorder(state, change_20_16), y = change_20_16)) + geom_col() + theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Change From 2008 to 2020 In Democratic Advantage In Union vs Non-Union Households") +
+  theme(axis.title = element_blank())
+```
+

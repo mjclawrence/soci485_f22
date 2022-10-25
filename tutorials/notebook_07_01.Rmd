@@ -1,0 +1,21 @@
+---
+title: "Introducing Visualizations" 
+author: ML
+date: October 25, 2022
+output: html_document
+---
+
+## Load Usual Packages
+
+I think every group has used the `weights` package by now but install it if you don't have it.
+
+```{r}
+library(tidyverse)
+#install.packages("weights")
+library(weights)
+```
+
+## Eviction Example
+
+Let's start by recreating the main figure in this paper. That's a scatterplot showing correlations. 
+
