@@ -17,5 +17,46 @@ library(weights)
 
 ## Eviction Example
 
-Let's start by recreating the main figure in this paper. That's a scatterplot showing correlations. 
+Let's start by looking at the relationship between zip codes' unemployment rates and their eviction rates. What would you expect? What are some possible ways to summarize the association?
+
+```{r}
+han <- read_csv("https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/han_data_complete.csv")
+```
+
+```{r}
+v19 <- load_variables(2019, dataset = "acs5")
+```
+
+```{r}
+population <- get_acs(geography = "zcta",
+                      zcta = zipcodes,
+                      state = states,
+                      year = 2019,
+                      survey = "acs5",
+                      variables = c(population = "B01003_001"),
+                      output = "wide") |> 
+  rename(population = populationE) |> 
+  select(GEOID, population) |> 
+  mutate(GEOID = as.numeric(GEOID))
+```
+
+```{r}
+han_population <- left_join(han, population)
+```
+
+
+What's the correlation?
+
+```{r}
+cor(han)
+```
+
+
+We'll try a scatterplot.
+
+```{r}
+han |> 
+  ggplot(aes(x = unemploymentrate, y = evict_pct, color = xsite)) + 
+  geom_point() + geom_smooth(method = "lm", se = FALSE, color = "black") + facet_wrap(~xsite, scales = "free") + guides(color = "none")
+```
 
