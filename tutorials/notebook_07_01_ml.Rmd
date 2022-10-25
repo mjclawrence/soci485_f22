@@ -1,3 +1,10 @@
+---
+title: "Introducing Visualizations" 
+author: "ML"
+date: October 25, 2022
+output: html_document
+---
+
 ## Load Usual Packages
 
 ```{r}
@@ -35,6 +42,9 @@ mccallum <- mccallum |>
 What is the distribution of the new `union_hh_diff` variable? How would you describe this distribution?
 
 ### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
+```{r}
+summary(mccallum$union_hh_diff)
+```
 
 The most common visualizations when you have one continuous variable are histograms and density plots. Let's set up what we need.
 
@@ -49,6 +59,12 @@ This is our base layer. We'll add another layer with a geometric function on top
 
 ### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
 
+```{r}
+mccallum |> 
+  ggplot(aes(x = union_hh_diff)) +
+  geom_density()
+```
+
 This plot is combining all the data from 2008, 2012, 2016, and 2020. It would be better to have a separate line for each presidential election. We can do that by assigning a color in our aesthetic map.
 
 ```{r}
@@ -62,16 +78,38 @@ If we were going to make the final version of a plot in R, we would want to cont
 
 ### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
 
+```{r}
+mccallum |> 
+  ggplot(aes(x = union_hh_diff,
+             color = as.factor(year))) +
+  geom_density() +
+  labs(x = "Percentage Point Difference in Democratic Vote in Union Households",
+       y = "",
+       color = "Year",
+       title = "Democratic Advantage in Union Households in Presidential Elections") +
+  theme(legend.position = "bottom")
+  
+```
 
 For our learning guide, we want to tell a story about states. In this example, we will focus on 2020 only. How do we do that?
 
 ### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
+
+```{r}
+mccallum |> 
+  filter(year == 2020)
+```
 
 We will make a plot showing the democratic advantage in each state. What would that look like?
 
 Now our plot will have a variable on the X axis and a variable on the Y axis. Which is which?
 
 ### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
+```{r}
+mccallum |> 
+  filter(year == 2020) |> 
+  ggplot(aes(x = state, y = union_hh_diff))
+```
 
 There will definitely be some cleanup of the axis labels but we can do that later.
 
@@ -79,9 +117,24 @@ We want a bar plot. There is a `geom_bar()` but that only works with one variabl
 
 ### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
 
+```{r}
+mccallum |> 
+  filter(year == 2020) |> 
+  ggplot(aes(x = state, y = union_hh_diff)) +
+  geom_col()
+```
+
 How could we improve this?
 
 ### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
+```{r}
+mccallum |> 
+  filter(year == 2020) |> 
+  ggplot(aes(x = reorder(state, union_hh_diff), 
+             y = union_hh_diff)) +
+  geom_col() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
 
 This looks like something we could work with. Let's take this data and pull only what we need into Datawrapper. The `DT` package's datatable function with buttons will be very helpful for this.
 
@@ -145,6 +198,16 @@ tiger |>
 Now what is our X, what is our Y, and what are the categories we will "fill" in each column?
 
 ### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
+
+```{r}
+tiger |> 
+  crosstab(x = cancul1, 
+           y = crimsent, 
+           weight = weight_w92,
+           format = "long") |> 
+  ggplot(aes(x = cancul1, y = pct, fill = crimsent)) +
+  geom_col()
+```
 
 Probably makes sense to assert the levels of crimsent:
 
@@ -272,6 +335,15 @@ Colors could work. Facets could work too...but watch the scales!
 
 ### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
 
+```{r}
+han |> 
+  ggplot(aes(x = unemploymentrate, y = evict_pct, 
+             color = xsite)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  facet_wrap(~xsite, scales = "free") + guides(color = "none")
+```
+
 We won't make the scatterplot in Datawrapper. Instead, we will extend the `geom_point()` function to make a dot plot summarizing the eviction rate by the majority race in zip codes for each city. Let's get those eviction rates.
 
 ```{r}
@@ -284,7 +356,15 @@ Now we can build a plot. What's our x? What's our y?
 
 ### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
 
+```{r}
+han |> 
+  group_by(xsite, majority_race) |> 
+  summarise(mean_evict_pct = wtd.mean(evict_pct, weights = population)) |> 
+  ggplot(aes(x = mean_evict_pct, y = xsite, color = majority_race)) + geom_point() + theme(legend.position = "bottom")
+```
+
 This will look a lot better in Datawrapper. Before creating it there, we'll need the data in wide format rather than long format. This time we can use the `pivot_wider()` function:
+
 
 ```{r}
 han |> 
@@ -301,4 +381,6 @@ han |>
     dom = 'Btip', # see explanation below
     buttons = list(list(extend = 'copy', title = NULL))))
 ```
+
+
 
