@@ -11,6 +11,7 @@ I think every group has used the `weights` package by now but install it if you 
 
 ```{r}
 library(tidyverse)
+library(DT)
 #install.packages("weights")
 library(weights)
 ```
@@ -20,43 +21,122 @@ library(weights)
 Let's start by looking at the relationship between zip codes' unemployment rates and their eviction rates. What would you expect? What are some possible ways to summarize the association?
 
 ```{r}
-han <- read_csv("https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/han_data_complete.csv")
+han <- read_csv("https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/han_data_complete_pop.csv")
 ```
-
-```{r}
-v19 <- load_variables(2019, dataset = "acs5")
-```
-
-```{r}
-population <- get_acs(geography = "zcta",
-                      zcta = zipcodes,
-                      state = states,
-                      year = 2019,
-                      survey = "acs5",
-                      variables = c(population = "B01003_001"),
-                      output = "wide") |> 
-  rename(population = populationE) |> 
-  select(GEOID, population) |> 
-  mutate(GEOID = as.numeric(GEOID))
-```
-
-```{r}
-han_population <- left_join(han, population)
-```
-
 
 What's the correlation?
 
 ```{r}
-cor(han)
+cor(han$unemploymentrate, han$evict_pct)
 ```
 
+What's the correlation weighted by population?
 
-We'll try a scatterplot.
+```{r}
+wtd.cor(han$unemploymentrate, han$evict_pct, han$population)
+```
+
+### To visualize the association between two continuous variables, good idea to try a scatterplot first.
+
+```{r}
+han_scatterplot <- han |> 
+  filter(unemploymentrate < .3) |> 
+  ggplot(aes(x = unemploymentrate, y = evict_pct))
+
+han_scatterplot + geom_point() + facet_wrap(~xsite, scales = "free") +
+  geom_smooth(method = "lm", se = FALSE)
+  
+```
+
 
 ```{r}
 han |> 
-  ggplot(aes(x = unemploymentrate, y = evict_pct, color = xsite)) + 
+  ggplot(aes(x = unemploymentrate, y = evict_pct, 
+             color = xsite)) + 
   geom_point() + geom_smooth(method = "lm", se = FALSE, color = "black") + facet_wrap(~xsite, scales = "free") + guides(color = "none")
 ```
+
+### We can extend the `geom_point()` function for a dot plot summarizing the eviction rate by the majority race in zip codes for each city
+
+```{r}
+evict_race <- han |> 
+  group_by(xsite, majority_race) |> 
+  summarise(mean_evict_pct = wtd.mean(evict_pct, weights = population))
+
+evict_race
+```
+
+```{r}
+evict_race |> 
+  ggplot(aes(x = mean_evict_pct, y = xsite, color = majority_race)) + geom_point() + theme(legend.position = "bottom")
+```
+
+### To recreate this figure in Datawrapper, we need wide data rather than long data.
+
+```{r}
+evict_race |> 
+  mutate(xsite = str_to_title(xsite),
+         majority_race = str_to_title(majority_race),
+         mean_evict_pct = mean_evict_pct * 100) |> 
+  pivot_wider(names_from = "majority_race", 
+              values_from = "mean_evict_pct") |> 
+  datatable(escape = TRUE,
+            rownames = FALSE,
+            extensions = 'Buttons', options = list(
+    dom = 'Btip', # see explanation below
+    buttons = list(list(extend = 'copy', title = NULL))))
+```
+
+## McCallum
+
+```{r}
+mccallum <- read_csv("https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/cces_08_20.csv")
+```
+
+```{r}
+mccallum_plot1 <- mccallum |> 
+  filter(year == 2020) |> 
+  mutate(union_hh_diff = union_hh_yes - union_hh_no) |> 
+  ggplot(aes(x = state, y = union_hh_diff)) + geom_col()
+
+mccallum_plot1
+```
+
+```{r}
+mccallum_plot1 <- mccallum |> 
+  filter(year == 2020) |> 
+  mutate(union_hh_diff = union_hh_yes - union_hh_no) |> 
+  ggplot(aes(x = reorder(state, union_hh_diff), y = union_hh_diff)) + geom_col() + theme(axis.text.x = element_text(angle = -270, hjust = 1))
+
+mccallum_plot1
+```
+
+```{r}
+mccallum |> 
+  filter(year == 2020) |> 
+  mutate(union_hh_diff = union_hh_yes - union_hh_no) |> 
+  select(state, union_hh_diff) |> 
+  datatable(rownames = FALSE,
+            extensions = 'Buttons', options = list(
+    dom = 'Btip', # see explanation below
+    buttons = list(list(extend = 'copy', title = NULL))))
+```
+
+## Tiger
+
+
+
+Let's extend the column plot to have a fill
+
+The `pollster()` package is really helpful for these kinds of figures. Install and load it.
+
+```{r}
+#install.packages("pollster)
+library(pollster)
+```
+
+```{r}
+
+```
+
 
