@@ -1,0 +1,43 @@
+---
+title: "McCallum Sample Map Data"
+author: "ML"
+date: "2022-10-27"
+output: html_document
+---
+
+## Load Usual Packages And Data
+
+```{r}
+library(tidyverse)
+library(DT)
+library(weights)
+library(pollster)
+```
+
+```{r}
+mccallum <- read_csv("https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/cces_08_20.csv")
+```
+
+Current data is long: row for each state for each year. Let's make it wide to be able to take advantage of more options in Datawrapper. I'm also mutating to create three new variables that can be piped into the map tooltips:
+
+- `union_hh_diff_20_08` is the change in the union advantage between 2008 and 2020
+- `abs_union_hh_diff_20_08` is the absolute value in that change
+- `union_hh_change` is a string noting whether the union advantaged increased or decreased
+
+```{r}
+mccallum |> 
+  pivot_longer(names_to = "union_hh", values_to = "prop", starts_with("union_hh")) |> 
+  unite("union_year", c(union_hh, year), sep = "_") |> 
+  pivot_wider(names_from = "union_year", values_from = "prop") |> 
+  mutate(union_hh_diff_20_08 = union_hh_diff_2020 - union_hh_diff_2008, 
+         abs_union_hh_diff_20_08 = abs(union_hh_diff_20_08),
+         union_hh_change = ifelse(union_hh_diff_20_08<0, "decreased by", "increased by")) |> 
+  datatable(escape = TRUE,
+            rownames = FALSE,
+            extensions = 'Buttons', options = list(
+    dom = 'Btip', # see explanation below
+    buttons = list(list(extend = 'copy', title = NULL))))
+```
+
+
+Sample map is [here](https://datawrapper.dwcdn.net/FL6Gl/1/).

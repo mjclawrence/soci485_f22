@@ -22,7 +22,7 @@ library(weights)
 We'll also use the `pollster` package when we start working with Team Tiger's data.
 
 ```{r}
-install.packages("pollster") # hashtag this line after installing
+#install.packages("pollster") # hashtag this line after installing
 library(pollster)
 ```
 
@@ -52,7 +52,8 @@ Since we only have one variable, we will define an X in ggplot's aesthetic mappi
 
 ```{r}
 mccallum |> 
-  ggplot(aes(x = union_hh_diff))
+  ggplot(aes(x = union_hh_diff)) +
+  geom_density()
 ```
 
 This is our base layer. We'll add another layer with a geometric function on top of it. For a histogram we would use `geom_histogram()` and for a density plot we will use `geom_density()`. Let's make a density plot.
@@ -83,13 +84,12 @@ mccallum |>
   ggplot(aes(x = union_hh_diff,
              color = as.factor(year))) +
   geom_density() +
-  labs(x = "Percentage Point Difference in Democratic Vote in Union Households",
-       y = "",
-       color = "Year",
-       title = "Democratic Advantage in Union Households in Presidential Elections") +
+  labs(x = "Percentage Points",
+       title = "Percentage Point Advantage In Union vs\nNon-Union Households Voting Democratic",
+       color = "Year") +
   theme(legend.position = "bottom")
-  
 ```
+
 
 For our learning guide, we want to tell a story about states. In this example, we will focus on 2020 only. How do we do that?
 
@@ -120,7 +120,8 @@ We want a bar plot. There is a `geom_bar()` but that only works with one variabl
 ```{r}
 mccallum |> 
   filter(year == 2020) |> 
-  ggplot(aes(x = state, y = union_hh_diff)) +
+  ggplot(aes(x = reorder(state, union_hh_diff), 
+             y = union_hh_diff)) +
   geom_col()
 ```
 
@@ -192,7 +193,9 @@ tiger |>
   crosstab(x = cancul1, 
            y = crimsent, 
            weight = weight_w92,
-           format = "long") 
+           format = "long")  |> 
+  ggplot(aes(x = cancul1, y = pct, fill = crimsent)) +
+  geom_col()
 ```
 
 Now what is our X, what is our Y, and what are the categories we will "fill" in each column?
@@ -205,8 +208,13 @@ tiger |>
            y = crimsent, 
            weight = weight_w92,
            format = "long") |> 
+  mutate(crimsent = factor(crimsent,
+                           levels = c("Too little time",
+                                      "About the right amount",
+                                      "Too much time"))) |> 
   ggplot(aes(x = cancul1, y = pct, fill = crimsent)) +
-  geom_col()
+  geom_col() +
+  geom_text(aes(label = round(pct,2)), position = position_stack(vjust = 0.5))
 ```
 
 Probably makes sense to assert the levels of crimsent:
@@ -335,7 +343,16 @@ Colors could work. Facets could work too...but watch the scales!
 
 ### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
 
-```{r}
+```{r facets without changes to scales}
+han |> 
+  ggplot(aes(x = unemploymentrate, y = evict_pct, 
+             color = xsite)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  facet_wrap(~xsite) + guides(color = "none")
+```
+
+```{r facets with changes to scales}
 han |> 
   ggplot(aes(x = unemploymentrate, y = evict_pct, 
              color = xsite)) + 
@@ -344,7 +361,9 @@ han |>
   facet_wrap(~xsite, scales = "free") + guides(color = "none")
 ```
 
-We won't make the scatterplot in Datawrapper. Instead, we will extend the `geom_point()` function to make a dot plot summarizing the eviction rate by the majority race in zip codes for each city. Let's get those eviction rates.
+We won't make the scatterplot in Datawrapper but it might look something like [this](https://datawrapper.dwcdn.net/ggn6D/3/). 
+
+Instead, we will extend the `geom_point()` function to make a dot plot summarizing the eviction rate by the majority race in zip codes for each city. Let's get those eviction rates.
 
 ```{r}
 han |> 
@@ -365,7 +384,6 @@ han |>
 
 This will look a lot better in Datawrapper. Before creating it there, we'll need the data in wide format rather than long format. This time we can use the `pivot_wider()` function:
 
-
 ```{r}
 han |> 
   group_by(xsite, majority_race) |> 
@@ -382,5 +400,19 @@ han |>
     buttons = list(list(extend = 'copy', title = NULL))))
 ```
 
+## Maps
+
+Let's make a choropleth map of eviction rates in New York zip codes. Something like this: https://datawrapper.dwcdn.net/ani5r/1/
+
+```{r}
+han |> 
+  filter(xsite == "NEW YORK") |> 
+  datatable(escape = TRUE,
+            rownames = FALSE,
+            extensions = 'Buttons', options = list(
+    dom = 'Btip', # see explanation below
+    buttons = list(list(extend = 'copy', title = NULL))))
+```
 
 
+Union map is here: https://datawrapper.dwcdn.net/FL6Gl/1/
