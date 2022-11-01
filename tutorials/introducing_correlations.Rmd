@@ -143,10 +143,11 @@ That looks great. There's some neat variation across cities that will be fun to 
 library(DT)
 
 evict_correlations |> 
-  datatable(rownames = FALSE, extensions = 'Buttons', options = list(
+ datatable(escape = TRUE,
+            rownames = FALSE,
+            extensions = 'Buttons', options = list(
     dom = 'Btip', # see explanation below
-    buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
-
+    buttons = list(list(extend = 'copy', title = NULL))))
 ```
 
 

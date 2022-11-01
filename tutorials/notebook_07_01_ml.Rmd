@@ -41,7 +41,8 @@ mccallum <- mccallum |>
 
 What is the distribution of the new `union_hh_diff` variable? How would you describe this distribution?
 
-### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
+### REPLACE THIS LINE WITH YOUR CODE CHUNK
+
 ```{r}
 summary(mccallum$union_hh_diff)
 ```
@@ -58,7 +59,7 @@ mccallum |>
 
 This is our base layer. We'll add another layer with a geometric function on top of it. For a histogram we would use `geom_histogram()` and for a density plot we will use `geom_density()`. Let's make a density plot.
 
-### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
+### REPLACE THIS LINE WITH YOUR CODE CHUNK
 
 ```{r}
 mccallum |> 
@@ -77,7 +78,7 @@ mccallum |>
 
 If we were going to make the final version of a plot in R, we would want to continue cleaning at this point. For example, we could give titles to the plot and the legend (with the `labs()` function), change the axis labels (also with the `labs()` function), and move the legend (with the `theme()` function.
 
-### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
+### REPLACE THIS LINE WITH YOUR CODE CHUNK
 
 ```{r}
 mccallum |> 
@@ -90,10 +91,9 @@ mccallum |>
   theme(legend.position = "bottom")
 ```
 
-
 For our learning guide, we want to tell a story about states. In this example, we will focus on 2020 only. How do we do that?
 
-### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
+### REPLACE THIS LINE WITH YOUR CODE CHUNK
 
 ```{r}
 mccallum |> 
@@ -104,7 +104,8 @@ We will make a plot showing the democratic advantage in each state. What would t
 
 Now our plot will have a variable on the X axis and a variable on the Y axis. Which is which?
 
-### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
+### REPLACE THIS LINE WITH YOUR CODE CHUNK
+
 ```{r}
 mccallum |> 
   filter(year == 2020) |> 
@@ -115,7 +116,7 @@ There will definitely be some cleanup of the axis labels but we can do that late
 
 We want a bar plot. There is a `geom_bar()` but that only works with one variable. Instead, we will use `geom_col()` for a column plot.
 
-### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
+### REPLACE THIS LINE WITH YOUR CODE CHUNK
 
 ```{r}
 mccallum |> 
@@ -127,7 +128,8 @@ mccallum |>
 
 How could we improve this?
 
-### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
+### REPLACE THIS LINE WITH YOUR CODE CHUNK
+
 ```{r}
 mccallum |> 
   filter(year == 2020) |> 
@@ -157,7 +159,7 @@ Let's extend the column plot function to fill in a column with values of another
 tiger <- read_csv("https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/tiger_w74_92.csv")
 ```
 
-As a reminder, we are looking at the relationship between beliefs about cancel culture and beliefs about formal punishment. 
+As a reminder, we are looking at the relationship between beliefs about cancel culture and beliefs about formal punishment.
 
 The `cancul1` question is: In general, when people publicly call out others on social media for posting content that might be considered offensive, are they more likely to 1: hold people accountable for their actions, or 2: punish people who didn't deserve it.
 
@@ -200,7 +202,7 @@ tiger |>
 
 Now what is our X, what is our Y, and what are the categories we will "fill" in each column?
 
-### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
+### REPLACE THIS LINE WITH YOUR CODE CHUNK
 
 ```{r}
 tiger |> 
@@ -270,7 +272,7 @@ tiger |>
     buttons = list(list(extend = 'copy', title = NULL))))
 ```
 
-There is also a `crosstab_3way()` function in pollster if you want to examine how an association between x and y varies by values of a control variable (z). In this example, our control variable is `ideology`. 
+There is also a `crosstab_3way()` function in pollster if you want to examine how an association between x and y varies by values of a control variable (z). In this example, our control variable is `ideology`.
 
 ```{r}
 tiger |> 
@@ -294,7 +296,6 @@ tiger |>
     dom = 'Btip', # see explanation below
     buttons = list(list(extend = 'copy', title = NULL))))
 ```
-
 
 ## Team Han
 
@@ -341,7 +342,7 @@ This plot has points for zip codes across nine cities. What have we seen so far 
 
 Colors could work. Facets could work too...but watch the scales!
 
-### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
+### REPLACE THIS LINE WITH YOUR CODE CHUNK
 
 ```{r facets without changes to scales}
 han |> 
@@ -361,7 +362,7 @@ han |>
   facet_wrap(~xsite, scales = "free") + guides(color = "none")
 ```
 
-We won't make the scatterplot in Datawrapper but it might look something like [this](https://datawrapper.dwcdn.net/ggn6D/3/). 
+We won't make the scatterplot in Datawrapper but it might look something like [this](https://datawrapper.dwcdn.net/ggn6D/3/).
 
 Instead, we will extend the `geom_point()` function to make a dot plot summarizing the eviction rate by the majority race in zip codes for each city. Let's get those eviction rates.
 
@@ -373,7 +374,7 @@ han |>
 
 Now we can build a plot. What's our x? What's our y?
 
-### REPLACE THIS LINE WITH YOUR CODE CHUNK ###
+### REPLACE THIS LINE WITH YOUR CODE CHUNK
 
 ```{r}
 han |> 
@@ -402,7 +403,7 @@ han |>
 
 ## Maps
 
-Let's make a choropleth map of eviction rates in New York zip codes. Something like this: https://datawrapper.dwcdn.net/ani5r/1/
+Let's make a choropleth map of eviction rates in New York zip codes. Something like this: <https://datawrapper.dwcdn.net/ani5r/1/>
 
 ```{r}
 han |> 
@@ -414,5 +415,4 @@ han |>
     buttons = list(list(extend = 'copy', title = NULL))))
 ```
 
-
-Union map is here: https://datawrapper.dwcdn.net/FL6Gl/1/
+Union map is here: <https://datawrapper.dwcdn.net/FL6Gl/1/>
