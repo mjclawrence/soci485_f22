@@ -1,0 +1,134 @@
+---
+title: "Regression Basics"
+author: "ML"
+date: "2022-11-04"
+output: html_document
+---
+
+Load packages
+
+```{r}
+library(tidyverse)
+library(weights)
+```
+
+I like the huxreg() function from the huxtable package for comparing regression models.
+
+```{r}
+install.packages("huxtable")
+library(huxtable)
+```
+
+Load data
+
+```{r}
+han <- read_csv("https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/han_data_complete_pop.csv")
+```
+
+Let's drop Phoenix to be safe
+
+```{r}
+han <- filter(han, xsite != "PHOENIX")
+```
+
+
+For the first example, let's just look at New York zip codes
+
+```{r}
+newyork <- filter(han, xsite == "NEW YORK")
+```
+
+Regress eviction on nonwhite percent in New York. We'll wrap nonwhite_pct in scale() to use standardized values (meaning each zip code's value is now in terms of its standard deviations above or below the mean).
+
+```{r}
+model1 <- lm(evict_pct ~ scale(nonwhite_pct),
+             data = newyork,
+             weight = population)
+
+summary(model1)
+```
+
+The coefficient tells us how much the dependent variable changes on average for a one unit increase in our independent variable. In this example, an increase in one standard deviation in the nonwhite percent is associated with an increase in the eviction rate of .01, on average. That change is significant.
+
+
+Next, regress eviction on nonwhite percent *controlling for* SNAP percent.
+
+```{r}
+model2 <- lm(evict_pct ~ scale(nonwhite_pct) + scale(snap_pct), # control with +
+             data = newyork,
+             weight = population)
+
+summary(model2)
+```
+
+Holding snap percent constant, a one standard deviation increase in the nonwhite percent is associated with a significant increase in the eviction rate of .006, on average.
+
+Let's look at the two models side by side...
+
+```{r}
+huxreg(model1, model2)
+```
+
+So after controlling for snap_pct, the coefficient for nonwhite_pct decreases from .010 to .006. That is a decrease of 40%...
+
+```{r}
+(.010 - .006) / .010
+```
+
+In words, that means that 40% of the coefficient for nonwhite in the first model is explained by the distribution of the snap percent across zip codes. Of course, the snap variable might be capturing a lot of variation that is explained by other variables as well, so controlling for more variables probably makes sense. But don't control for too many.
+
+## Dealing with other cities
+
+We need the full han dataset this time. 
+
+Start with a model that only has nonwhite_pct.
+
+```{r}
+model3 <- lm(evict_pct ~ scale(nonwhite_pct),
+             data = han,
+             weight = population)
+
+summary(model3)
+```
+
+Controlling for cities gives each city its own intercept...
+
+```{r}
+model4 <- lm(evict_pct ~ scale(nonwhite_pct) + xsite, # use + for controls
+             data = han,
+             weight = population)
+
+summary(model4)
+```
+
+In this model, the intercept coefficient (0.0108472) is the predicted eviction rate in Austin (the reference city) if the zip code's nonwhite percent is zero. And in Austin, a zip code with a nonwhite percent one standard deviation above the mean would be predicted to have an eviction rate of: 0.0108472 + 1*.0113334 = 0.0221806
+
+For any other city, start with that prediction and also add in the city's respective coefficient. So for a New York zip code with a nonwhite percent 1 standard deviation above the mean:
+
+```{r}
+# Intercept + 1*nonwhite_pct + 0.0100335
+0.0108472 + 1*.0113334 + 0.0100335
+```
+
+Since the coefficient for New York is significant, the prediction of .032 is significantly higher than the prediction of 0.022 in Austin.
+
+Including an interaction term between nonwhite_pct and cities gives each city its own intercept and slope...
+
+```{r}
+model5 <- lm(evict_pct ~ nonwhite_pct * xsite, # use * for interaction
+             data = han,
+             weight = population)
+
+summary(model5)
+```
+
+The significant coefficients in the interaction terms for Dallas, Indianapolis, and South Bend tell us that the slopes for those cities are significantly steeper than the slope for the reference city (Austin). The coefficients for those significant interaction terms are all positive, so nonwhite_pct looks to be more strongly positively associated with eviction in those cities. The smoothed lines in the scatterplot confirm that...
+
+```{r}
+han |> 
+  ggplot(aes(x = nonwhite_pct, y = evict_pct, color = xsite)) +
+  geom_point() + geom_smooth(method = "lm", color = "black") + 
+  facet_wrap(.~xsite) + 
+  guides(color = "none")
+```
+

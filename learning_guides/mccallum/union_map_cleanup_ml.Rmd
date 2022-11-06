@@ -26,12 +26,16 @@ Current data is long: row for each state for each year. Let's make it wide to be
 
 ```{r}
 mccallum |> 
+  mutate(union_hh_diff = union_hh_yes - union_hh_no) |> 
   pivot_longer(names_to = "union_hh", values_to = "prop", starts_with("union_hh")) |> 
   unite("union_year", c(union_hh, year), sep = "_") |> 
   pivot_wider(names_from = "union_year", values_from = "prop") |> 
   mutate(union_hh_diff_20_08 = union_hh_diff_2020 - union_hh_diff_2008, 
          abs_union_hh_diff_20_08 = abs(union_hh_diff_20_08),
          union_hh_change = ifelse(union_hh_diff_20_08<0, "decreased by", "increased by")) |> 
+  select(state | contains("2020") | contains("diff")) |> 
+  select(state, union_hh_no_2020, union_hh_yes_2020, union_hh_diff_2020,
+         union_hh_diff_2016, union_hh_diff_2012, union_hh_diff_2008) |> 
   datatable(escape = TRUE,
             rownames = FALSE,
             extensions = 'Buttons', options = list(

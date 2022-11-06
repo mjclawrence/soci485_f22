@@ -33,7 +33,7 @@ cces_2008_common <- cces_2008_common |>
   rename(case_id = V100,
          weight_08 = V201,
          union_08 = CC329) |> 
-  mutate(union_08_any = ifelse(as.numeric(union_08) %in% 2:4, 1, 0)) 
+  mutate(union_08_any = ifelse(as.numeric(union_08) >= 2 & as.numeric(union_08) <=4, 1, 0)) 
 ```
 
 ## Merge 2008 union data into cumulative file
@@ -46,20 +46,45 @@ cces <- left_join(cces, cces_2008_common)
 ```{r}
 cces_2008 <- cces |> 
   filter(!is.na(voted_pres_08) & !is.na(union_08_any)) |>
+  filter(str_detect(voted_pres_08, "Obama|McCain|Other")) |>
   rename(union_any = union_08_any) |> 
   group_by(state, union_any) |> # Change to state for full name
   summarise(dem_proportion = wtd.mean(voted_pres_08 == "Barack Obama",
-                                      weights = weight_cumulative)) |> 
+                                      weights = weight_08)) |> 
   mutate(year = 2008)
 ```
+
+```{r}
+cces_2008_all <- cces |> 
+  filter(!is.na(voted_pres_08) & !is.na(union_08_any)) |>
+  filter(str_detect(voted_pres_08, "Obama|McCain|Other")) |> 
+  rename(union_any = union_08_any) |> 
+  group_by(union_any) |> # Change to state for full name
+  summarise(dem_proportion = wtd.mean(voted_pres_08 == "Barack Obama",
+                                      weights = weight_cumulative, na.rm = TRUE)) |> 
+  mutate(year = 2008)
+```
+
 
 ## 2012 Democratic Vote By Union Household
 
 ```{r}
 cces_2012 <- cces |> 
   filter(!is.na(voted_pres_12) & !is.na(union_hh) & !is.na(union)) |>
+  filter(str_detect(voted_pres_12, "Obama|Romney|Other")) |>
   mutate(union_any = ifelse(union_hh %in% 1:2 | union %in% 1:2, 1, 0)) |> 
   group_by(state, union_any) |> # Change to state for full name
+  summarise(dem_proportion = wtd.mean(voted_pres_12 == "Barack Obama",
+                                      weights = weight_cumulative)) |> 
+  mutate(year = 2012)
+```
+
+```{r}
+cces_2012_all <- cces |> 
+  filter(!is.na(voted_pres_12) & !is.na(union_hh) & !is.na(union)) |>
+  filter(str_detect(voted_pres_12, "Obama|Romney|Other")) |>
+  mutate(union_any = ifelse(union_hh %in% 1:2 | union %in% 1:2, 1, 0)) |> 
+  group_by(union_any) |> # Change to state for full name
   summarise(dem_proportion = wtd.mean(voted_pres_12 == "Barack Obama",
                                       weights = weight_cumulative)) |> 
   mutate(year = 2012)
@@ -70,8 +95,20 @@ cces_2012 <- cces |>
 ```{r}
 cces_2016 <- cces |> 
   filter(!is.na(voted_pres_16) & !is.na(union_hh) & !is.na(union)) |>
+  filter(str_detect(voted_pres_16, "Clinton|Trump|Other")) |>
   mutate(union_any = ifelse(union_hh %in% 1:2 | union %in% 1:2, 1, 0)) |> 
   group_by(state, union_any) |> # Change to state for full name
+  summarise(dem_proportion = wtd.mean(voted_pres_16 == "Hilary Clinton",
+                                      weights = weight_cumulative)) |> 
+  mutate(year = 2016)
+```
+
+```{r}
+cces_2016_all <- cces |> 
+  filter(!is.na(voted_pres_16) & !is.na(union_hh) & !is.na(union)) |>
+  filter(str_detect(voted_pres_16, "Clinton|Trump|Other")) |>
+  mutate(union_any = ifelse(union_hh %in% 1:2 | union %in% 1:2, 1, 0)) |> 
+  group_by(union_any) |> # Change to state for full name
   summarise(dem_proportion = wtd.mean(voted_pres_16 == "Hilary Clinton",
                                       weights = weight_cumulative)) |> 
   mutate(year = 2016)
@@ -82,8 +119,20 @@ cces_2016 <- cces |>
 ```{r}
 cces_2020 <- cces |> 
   filter(!is.na(voted_pres_20) & !is.na(union_hh) & !is.na(union)) |>
+  filter(str_detect(voted_pres_20, "Biden|Trump|Other")) |>
   mutate(union_any = ifelse(union_hh %in% 1:2 | union %in% 1:2, 1, 0)) |> 
   group_by(state, union_any) |> # Change to state for full name
+  summarise(dem_proportion = wtd.mean(voted_pres_20 == "Joe Biden",
+                                      weights = weight_cumulative)) |> 
+  mutate(year = 2020)
+```
+
+```{r}
+cces_2020_all <- cces |> 
+  filter(!is.na(voted_pres_20) & !is.na(union_hh) & !is.na(union)) |>
+  filter(str_detect(voted_pres_20, "Biden|Trump|Other")) |>
+  mutate(union_any = ifelse(union_hh %in% 1:2 | union %in% 1:2, 1, 0)) |> 
+  group_by(union_any) |> # Change to state for full name
   summarise(dem_proportion = wtd.mean(voted_pres_20 == "Joe Biden",
                                       weights = weight_cumulative)) |> 
   mutate(year = 2020)
@@ -99,9 +148,37 @@ cces_08_20 <- bind_rows(cces_2008, cces_2012, cces_2016, cces_2020) |>
   pivot_wider(names_from = "union_any", values_from = "dem_proportion")
 ```
 
+# Combine 2008, 2012, 2016, and 2020 summaries
+
+```{r}
+cces_08_20_all <- bind_rows(cces_2008_all, 
+                            cces_2012_all, 
+                            cces_2016_all, 
+                            cces_2020_all) |> 
+  mutate(union_any = factor(union_any,
+                            labels = c("union_hh_no",
+                                       "union_hh_yes"))) |> 
+  pivot_wider(names_from = "union_any", values_from = "dem_proportion")
+```
+
+```{r}
+cces_08_20_all |> 
+  pivot_longer(names_to = "union", values_to = "pct",
+               starts_with("union")) |> 
+  ggplot(aes(x = as.factor(year), y = pct, fill = union)) +
+  geom_col(position = "dodge") +
+  theme(legend.position = "bottom")
+```
+
+
+
 # Save combined file
 
 ```{r}
-write.csv(cces_08_20, "../../data/cces_08_20.csv", row.names = FALSE)
+write.csv(cces_08_20, "../../data/cces_08_20_rev.csv", row.names = FALSE)
+```
+
+```{r}
+write.csv(cces_08_20_all, "../../data/cces_08_20_all.csv", row.names = FALSE)
 ```
 

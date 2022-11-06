@@ -161,6 +161,30 @@ tiger <- read_csv("https://raw.githubusercontent.com/mjclawrence/soci485_f22/mas
 
 As a reminder, we are looking at the relationship between beliefs about cancel culture and beliefs about formal punishment.
 
+```{r}
+cancul_table <- tiger |> 
+  topline(cancul1, weight_w92) |> 
+  select(Response, `Valid Percent`) |> 
+  filter(Response!="(Missing)") |> 
+  mutate(question = "Cancel Culture") 
+
+crimsent_table <- tiger |> 
+  topline(crimsent, weight_w92) |> 
+  select(Response, `Valid Percent`) |> 
+  filter(Response !="(Missing)") |> 
+  mutate(question = "Crimsent") 
+
+bind_rows(cancul_table,
+                            crimsent_table) |> 
+  pivot_wider(names_from = "question",
+              values_from = "Valid Percent") |> 
+  datatable(rownames = FALSE,
+            extensions = 'Buttons', options = list(
+    dom = 'Btip', # see explanation below
+    buttons = list(list(extend = 'copy', title = NULL))))
+```
+
+
 The `cancul1` question is: In general, when people publicly call out others on social media for posting content that might be considered offensive, are they more likely to 1: hold people accountable for their actions, or 2: punish people who didn't deserve it.
 
 The `crimsent` question is: Overall, would you say people who are convicted of crimes in this country serve: 1: too much time in prison, 2: too little time in prison, or 3: about the right amount of time in prison.
@@ -416,3 +440,44 @@ han |>
 ```
 
 Union map is here: <https://datawrapper.dwcdn.net/FL6Gl/1/>
+
+
+```{r}
+options(scipen=999)
+newyork <- filter(han, xsite == "NEW YORK")
+model1 <- lm(evict_pct ~ nonwhite_pct, data = newyork, weight = population)
+summary(model1)
+```
+
+```{r}
+model2 <- lm(evict_pct ~ nonwhite_pct + snap_pct, data = newyork, weight = population)
+summary(model2)
+```
+
+Amount of nonwhite_pct explained by snap_pct
+
+```{r}
+1 - ((0.00040399 - 0.00023957) / 0.00040399)
+```
+
+```{r}
+han |> 
+  filter(xsite == "PHILADELPHIA") |> 
+  mutate(evict_count = evict_pct * (prop_renter_occ*population)) |> 
+  #select(GEOID, evict_count, majority_race) |> 
+  #arrange(majority_race) |> 
+  group_by(majority_race) |> 
+  summarise(eviction_count = sum(evict_count),
+            population = sum(population)) |> 
+  mutate(total_evictions = sum(eviction_count),
+         total_population = sum(population)) |> 
+  mutate(pct_of_evictions = eviction_count / total_evictions,
+         pct_of_population = population / total_population) |> 
+  datatable(escape = TRUE,
+            rownames = FALSE,
+            extensions = 'Buttons', options = list(
+    dom = 'Btip', # see explanation below
+    buttons = list(list(extend = 'copy', title = NULL))))
+```
+
+
