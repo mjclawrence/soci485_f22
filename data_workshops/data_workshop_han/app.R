@@ -2,6 +2,7 @@ library(shiny)
 library(tidyverse)
 library(weights)
 library(DT)
+library(shinythemes)
 
 han <- read_csv("https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/han_data_complete_pop.csv")
 
@@ -29,24 +30,30 @@ citysites <- bind_cols(unique(han$xsite), websites) |>
 
 # Define UI for application that pulls a city and characteristics
 ui <- fluidPage(
+  
+  shinythemes::themeSelector(),
+  #shinytheme(theme = "flatly"),
 
     # Application title
     titlePanel("Eviction and Race"),
 
     # Sidebar with a slider input for number of bins 
         sidebarPanel(
-          selectInput(inputId = "city", #name of input
+          selectizeInput(inputId = "city", #name of input
                       label = "Choose a city:", #label displayed in ui
                       choices = as.character(unique(han$xsite)),
                       selected = "PHILADELPHIA"),
-          checkboxGroupInput(inputId = "characteristic", #name of input
-                             label = "Select characteristic(s):", #label displayed in ui
-                             choices = as.character(unique(han$characteristic)),
-                             selected = "nonwhite_pct")
+          selectizeInput(inputId = "characteristic", #name of input
+                        label = "Select characteristic(s):", #label displayed in ui
+                        choices = as.character(unique(han$characteristic)),
+                        selected = "nonwhite_pct",
+                        multiple = TRUE,
+                        options = list(plugins= list('remove_button')))
                         ),
         # Show a plot of the generated distribution
         mainPanel(
-          tabsetPanel(
+          navbarPage(
+            "Select Tab For Output",
             tabPanel("Correlation(s) With Eviction", 
                     plotOutput("eviction_scatterplot")),
             tabPanel("Descriptives By Majority Race", 
@@ -80,8 +87,10 @@ server <- function(input, output) {
         plot1 <- han_filter() |> 
           group_by(characteristic) |> 
           ggplot(aes(x = value,
-                     y = evict_pct)) +
-          geom_point() + facet_wrap(~characteristic, scales = "free")
+                     y = evict_pct,
+                     color = majority_race)) +
+          geom_point() + facet_wrap(~characteristic, scales = "free") +
+          theme(legend.position = "bottom")
     
           plot1
         })

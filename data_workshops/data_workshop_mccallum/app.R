@@ -3,6 +3,7 @@ library(tidyverse)
 library(weights)
 library(DT)
 library(pollster)
+library(shinythemes)
 
 mccallum <- read_csv("https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/cces_08_20_threeparty_states.csv")
 mccallum_all <- read_csv("https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/cces_08_20_threeparty_all.csv")
@@ -22,6 +23,9 @@ mccallum <- bind_rows(mccallum_all, mccallum) |>
 
 # Define UI for application that pulls a city and characteristics
 ui <- fluidPage(
+  
+  shinythemes::themeSelector(),
+  #shinytheme(theme = "flatly"),
 
     # Application title
     titlePanel("Presidential Vote By Union Household Status"),

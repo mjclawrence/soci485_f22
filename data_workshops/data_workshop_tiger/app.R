@@ -3,6 +3,7 @@ library(tidyverse)
 library(weights)
 library(DT)
 library(pollster)
+library(shinythemes)
 
 tiger <- read_csv("https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/tiger_w74_92.csv")
 
@@ -16,13 +17,16 @@ tiger <- tiger |>
 
 # Define UI for application that pulls a city and characteristics
 ui <- fluidPage(
+  
+  shinythemes::themeSelector(),
+  #shinytheme(theme = "flatly"),
 
     # Application title
     titlePanel("Formal and Informal Punishment"),
 
     # Sidebar with a slider input for number of bins 
         sidebarPanel(
-          selectInput(inputId = "characteristic", #name of input
+          selectizeInput(inputId = "characteristic", #name of input
                              label = "Select characteristic(s):", #label displayed in ui
                              choices = as.character(unique(tiger$characteristic)),
                              selected = "education")
