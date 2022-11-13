@@ -1,0 +1,214 @@
+---
+title: "cces setup"
+author: "MV"
+date: "2022-10-13"
+output: html_document
+---
+
+## Load usual packages
+
+```{r}
+library(tidyverse)
+#install.packages("weights") # May need to install this package. Put hashtag in front after installing.
+library(weights)
+```
+
+## Load 2006-2021 Cumulative File
+```{r}
+cces <- readRDS("../../data/cumulative_2006-2021.rds")
+```
+
+## Load 2008 Common File
+```{r}
+load("../../data/cces_2008_common.RData")
+cces_2008_common <- x
+rm(x)
+```
+
+
+### Pull union data from 2008 Common File
+```{r}
+cces_2008_common <- cces_2008_common |> 
+  select("V100", "V201", "CC329") |> 
+  rename(case_id = V100,
+         weight_08 = V201,
+         union_08 = CC329) |> 
+  mutate(union_08_any = ifelse(as.numeric(union_08) >= 2 & as.numeric(union_08) <=4, 1, 0)) 
+```
+
+## Merge 2008 union data into cumulative file
+```{r}
+cces <- left_join(cces, cces_2008_common)
+```
+
+## 2008 Democratic Vote By Union Household
+
+```{r}
+cces_2008 <- cces |> 
+  filter(!is.na(voted_pres_08) & !is.na(union_08_any)) |>
+  filter(str_detect(voted_pres_08, "Obama|McCain|Other")) |>
+  rename(union_any = union_08_any) |> 
+  group_by(state, union_any) |> # Change to state for full name
+  summarise(dem_proportion = wtd.mean(voted_pres_08 == "Barack Obama",
+                                      weights = weight_08),
+            rep_proportion = wtd.mean(voted_pres_08 == "John McCain",
+                                      weights = weight_08),
+            other_proportion = wtd.mean(str_detect(voted_pres_08, "Other"),
+                                        weights = weight_08)) |> 
+  mutate(year = 2008)
+```
+
+```{r}
+cces_2008_all <- cces |> 
+  filter(!is.na(voted_pres_08) & !is.na(union_08_any)) |>
+  filter(str_detect(voted_pres_08, "Obama|McCain|Other")) |> 
+  rename(union_any = union_08_any) |> 
+  group_by(union_any) |> # Change to state for full name
+  summarise(dem_proportion = wtd.mean(voted_pres_08 == "Barack Obama",
+                                      weights = weight_cumulative, na.rm = TRUE),
+            rep_proportion = wtd.mean(voted_pres_08 == "John McCain",
+                                      weights = weight_cumulative, na.rm = TRUE),
+            other_proportion = wtd.mean(str_detect(voted_pres_08, "Other"),
+                                        weights = weight_08)) |> 
+  mutate(year = 2008)
+```
+
+
+## 2012 Democratic Vote By Union Household
+
+```{r}
+cces_2012 <- cces |> 
+  filter(!is.na(voted_pres_12) & !is.na(union_hh) & !is.na(union)) |>
+  filter(str_detect(voted_pres_12, "Obama|Romney|Other")) |>
+  mutate(union_any = ifelse(union_hh %in% 1:2 | union %in% 1:2, 1, 0)) |> 
+  group_by(state, union_any) |> # Change to state for full name
+  summarise(dem_proportion = wtd.mean(voted_pres_12 == "Barack Obama",
+                                      weights = weight_cumulative),
+            rep_proportion = wtd.mean(voted_pres_12 == "Mitt Romney",
+                                      weights = weight_cumulative),
+            other_proportion = wtd.mean(str_detect(voted_pres_12, "Other"),
+                              weights = weight_cumulative)) |> 
+  mutate(year = 2012)
+```
+
+```{r}
+cces_2012_all <- cces |> 
+  filter(!is.na(voted_pres_12) & !is.na(union_hh) & !is.na(union)) |>
+  filter(str_detect(voted_pres_12, "Obama|Romney|Other")) |>
+  mutate(union_any = ifelse(union_hh %in% 1:2 | union %in% 1:2, 1, 0)) |> 
+  group_by(union_any) |> # Change to state for full name
+  summarise(dem_proportion = wtd.mean(voted_pres_12 == "Barack Obama",
+                                      weights = weight_cumulative),
+            rep_proportion = wtd.mean(voted_pres_12 == "Mitt Romney",
+                                      weights = weight_cumulative),
+            other_proportion = wtd.mean(str_detect(voted_pres_12, "Other"),
+                              weights = weight_cumulative)) |> 
+  mutate(year = 2012)
+```
+
+## 2016 Democratic Vote By Union Household
+
+```{r}
+cces_2016 <- cces |> 
+  filter(!is.na(voted_pres_16) & !is.na(union_hh) & !is.na(union)) |>
+  filter(str_detect(voted_pres_16, "Clinton|Trump|Other")) |>
+  mutate(union_any = ifelse(union_hh %in% 1:2 | union %in% 1:2, 1, 0)) |> 
+  group_by(state, union_any) |> # Change to state for full name
+  summarise(dem_proportion = wtd.mean(voted_pres_16 == "Hilary Clinton",
+                                      weights = weight_cumulative),
+            rep_proportion = wtd.mean(voted_pres_16 == "Donald Trump",
+                                      weights = weight_cumulative),
+            other_proportion = wtd.mean(str_detect(voted_pres_16, "Other"),
+                              weights = weight_cumulative)) |> 
+  mutate(year = 2016)
+```
+
+```{r}
+cces_2016_all <- cces |> 
+  filter(!is.na(voted_pres_16) & !is.na(union_hh) & !is.na(union)) |>
+  filter(str_detect(voted_pres_16, "Clinton|Trump|Other")) |>
+  mutate(union_any = ifelse(union_hh %in% 1:2 | union %in% 1:2, 1, 0)) |> 
+  group_by(union_any) |> # Change to state for full name
+  summarise(dem_proportion = wtd.mean(voted_pres_16 == "Hilary Clinton",
+                                      weights = weight_cumulative),
+            rep_proportion = wtd.mean(voted_pres_16 == "Donald Trump",
+                                      weights = weight_cumulative),
+            other_proportion = wtd.mean(str_detect(voted_pres_16, "Other"),
+                              weights = weight_cumulative)) |> 
+  mutate(year = 2016)
+```
+
+## 2020 Democratic Vote By Union Household
+
+```{r}
+cces_2020 <- cces |> 
+  filter(!is.na(voted_pres_20) & !is.na(union_hh) & !is.na(union)) |>
+  filter(str_detect(voted_pres_20, "Biden|Trump|Other")) |>
+  mutate(union_any = ifelse(union_hh %in% 1:2 | union %in% 1:2, 1, 0)) |> 
+  group_by(state, union_any) |> # Change to state for full name
+  summarise(dem_proportion = wtd.mean(voted_pres_20 == "Joe Biden",
+                                      weights = weight_cumulative),
+            rep_proportion = wtd.mean(voted_pres_20 == "Donald Trump",
+                                      weights = weight_cumulative),
+            other_proportion = wtd.mean(str_detect(voted_pres_20, "Other"),
+                              weights = weight_cumulative)) |> 
+  mutate(year = 2020)
+```
+
+```{r}
+cces_2020_all <- cces |> 
+  filter(!is.na(voted_pres_20) & !is.na(union_hh) & !is.na(union)) |>
+  filter(str_detect(voted_pres_20, "Biden|Trump|Other")) |>
+  mutate(union_any = ifelse(union_hh %in% 1:2 | union %in% 1:2, 1, 0)) |> 
+  group_by(union_any) |> # Change to state for full name
+  summarise(dem_proportion = wtd.mean(voted_pres_20 == "Joe Biden",
+                                      weights = weight_cumulative),
+            rep_proportion = wtd.mean(voted_pres_20 == "Donald Trump",
+                                      weights = weight_cumulative),
+            other_proportion = wtd.mean(str_detect(voted_pres_20, "Other"),
+                              weights = weight_cumulative)) |> 
+  mutate(year = 2020)
+```
+
+# Combine 2008, 2012, 2016, and 2020 summaries
+
+```{r}
+cces_08_20 <- bind_rows(cces_2008, cces_2012, cces_2016, cces_2020) |> 
+  mutate(union_any = factor(union_any,
+                            labels = c("union_hh_no",
+                                       "union_hh_yes")))
+```
+
+# Combine 2008, 2012, 2016, and 2020 summaries
+
+```{r}
+cces_08_20_all <- bind_rows(cces_2008_all, 
+                            cces_2012_all, 
+                            cces_2016_all, 
+                            cces_2020_all) |> 
+  mutate(union_any = factor(union_any,
+                            labels = c("union_hh_no",
+                                       "union_hh_yes")))
+```
+
+```{r}
+cces_08_20_all |> 
+  pivot_longer(names_to = "party", values_to = "pct",
+               ends_with("proportion")) |> 
+  ggplot(aes(x = as.factor(year), y = pct, color = party, group = party)) +
+  geom_point() + geom_line() + facet_wrap(~union_any) +
+  theme(legend.position = "bottom") +scale_color_manual(values = c("blue", "darkgreen", "red"))
+```
+
+
+
+# Save combined file
+
+```{r}
+write.csv(cces_08_20, "../../data/cces_08_20_threeparty_states.csv", row.names = FALSE)
+```
+
+```{r}
+write.csv(cces_08_20_all, "../../data/cces_08_20_threeparty_all.csv", row.names = FALSE)
+```
+

@@ -1,0 +1,138 @@
+---
+title: "Zip Code Characteristics Explaining Race-Eviction Association"
+author: "ML"
+date: "2022-11-11"
+output: html_document
+---
+
+Load packages and data
+```{r}
+library(tidyverse)
+library(weights)
+
+
+han <- read_csv("https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/han_data_complete_pop.csv")
+
+# Drop Phoenix
+han <- filter(han, xsite != "PHOENIX")
+```
+
+
+# Baseline model
+
+Start with a model regressing eviction on the nonwhite percentage. Use the standardized values.
+
+```{r}
+baseline <- lm(scale(evict_pct) ~ scale(nonwhite_pct) + factor(xsite), data = han, weight = population)
+
+summary(baseline)
+```
+
+Save the nonwhite_pct coefficient from the baseline 
+
+```{r}
+baseline_coef = coef(baseline)[[2]]
+```
+
+
+# Model formula setup
+
+Create vector of the names of the other zip code characteristics we will control for
+
+```{r}
+vars <- c("median_hh_income",
+            "gini",
+            "prop_owner_occ",
+            "prop_renter_occ",
+            "unemploymentrate",
+            "singlerate",
+            "rent_pct_incomeE",
+            "snap_pct",
+            "Less_than_15_minutes",
+            "college_plus")
+```
+
+
+Now we'll start building each of the formulas. Start with what is constant in each formula before adding the control variables.
+
+```{r}
+nocontrols <- paste("scale(evict_pct)", 
+                    "~ scale(nonwhite_pct) + ")
+```
+
+Across each of the values of vars, we are going to create a function. That function will paste the chunk above, insert one of the values of vars, and paste the rest of the model. 
+
+```{r}
+nocontrols_vars <- 
+  unlist(lapply(vars, function(x) paste0(nocontrols, 
+                                           "scale(", x, ") + factor(xsite)")))
+```
+
+Return `nocontrols_vars` to confirm that we have all ten models
+
+```{r}
+nocontrols_vars
+```
+
+Now we have to assert that each of the models is a formula
+
+```{r}
+formulas <- 
+  lapply(nocontrols_vars, formula)
+```
+
+Finally we can run each formula as a regression. Note that we are adding the data and weight here rather than earlier.
+
+We are going to pull the second coefficient from the output for each regression model. That is the coefficient for nonwhite_pct controlling for the zip code characteristic in each model and the city. 
+
+```{r}
+  models <- lapply(formulas, FUN=function(x) {
+    coef(lm(x, data = han, weight = population))[[2]]
+  })
+```
+
+The function output is a list. We can recover any coefficient by identifying its location in the list. For example, for the first model:
+
+```{r}
+models[[1]]
+```
+
+If we did everything correctly, that coefficient should be the coefficient for nonwhite_pct in the model controlling for median_hh_income (the first variable in the vector of variables):
+
+```{r}
+summary(lm(scale(evict_pct) ~ scale(nonwhite_pct) + scale(median_hh_income) + factor(xsite), data = han, weight = population))
+```
+
+Looks good!
+
+Use `unlist` to pull the coefficients from all the models into a vector.
+
+```{r}
+coefficients <- unlist(models)
+```
+
+
+Put everything together in a new dataframe.
+
+```{r}
+results <- bind_cols( # bind vectors as columns
+  vars, # vector of variable names
+  coefficients) |> # vector of coefficients unlisted in chunk above
+  rename(variable = 1, 
+         coefficient = 2)
+
+results
+```
+
+Last step is to calculate the proportional difference between the coefficient for nonwhite_pct in the baseline model and the coefficient for nonwhite_pct in each model controlling for a different characteristic.
+
+```{r}
+results <- results |> 
+  mutate(explained =
+           (baseline_coef - coefficient) / 
+           baseline_coef)
+
+results
+```
+
+

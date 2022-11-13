@@ -121,6 +121,7 @@ evict_correlations <- han |>
     median_hh_income:other_pct, # the variables to correlate with eviction
                    ~ wtd.cor(.x, # this will run the wtd.cor function across each column
                          evict_pct, # each column will correlate with evict_pct
+                         population
                          )))
 ```
 
@@ -133,6 +134,7 @@ evict_correlations <- han |>
     median_hh_income:other_pct, # the variables to correlate with eviction
                    ~ wtd.cor(.x, # this will run the wtd.cor function across each column
                          evict_pct, # each column will correlate with evict_pct
+                         population
                          )[1] # index to keep the coefficients only
     ))
 ```
