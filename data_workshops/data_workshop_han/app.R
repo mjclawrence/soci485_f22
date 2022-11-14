@@ -89,8 +89,9 @@ server <- function(input, output) {
           ggplot(aes(x = value,
                      y = evict_pct,
                      color = majority_race)) +
-          geom_point() + facet_wrap(~characteristic, scales = "free") +
-          theme(legend.position = "bottom")
+          geom_point(aes(size = 3)) + 
+          facet_wrap(~characteristic, scales = "free") +
+          theme(legend.position = "bottom") + guides(size = FALSE)
     
           plot1
         })
