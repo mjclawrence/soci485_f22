@@ -4,12 +4,21 @@ library(weights)
 
 han <- read_csv("https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/han_data_complete_pop.csv")
 
+
+
+
 han |> 
   filter(xsite=="SOUTH BEND") |> 
   cor(evict_pct, white_pct)
 
 sb <- han |> 
   filter(xsite == "SOUTH BEND")
+
+ 
+wtd.quantile(sb$nonwhite_pct, sb$population, probs = c(0.25, 0.5, 0.75))
+summary(sb$nonwhite_pct)
+
+
 
 wtd.cor(sb$evict_pct, sb$nonwhite_pct, weight = sb$population)
 wtd.cor(sb$evict_pct, sb$black_pct, weight = sb$population)

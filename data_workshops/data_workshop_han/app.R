@@ -1,8 +1,19 @@
-library(shiny)
+# Load packages
+
 library(tidyverse)
 library(weights)
 library(DT)
+
+#nstall.packages("shiny") # hashtag after installing
+library(shiny)
+
+#install.packages("shinythemes") # hashtag after installing
 library(shinythemes)
+
+# Load the data
+
+## For the final app we will want local data files
+## For now we can use the web versions
 
 han <- read_csv("https://raw.githubusercontent.com/mjclawrence/soci485_f22/master/data/han_data_complete_pop.csv")
 
@@ -12,6 +23,10 @@ han <- han |>
   relocate(population, .after = "xsite") |> 
   relocate(majority_race, .after = population) |> 
   pivot_longer(names_to = "characteristic", values_to = "value", 7:22)
+
+# The tab with iframe embeds will need urls.
+## Most of these don't work as embeds but this is where
+## you will add the maps of each city in xsite order
 
 websites <- c("https://www.datawrapper.de",
               "https://www.cnn.com",
@@ -28,16 +43,23 @@ citysites <- bind_cols(unique(han$xsite), websites) |>
          website = 2)
 
 
-# Define UI for application that pulls a city and characteristics
+# First part of the app is setting up the user interface
+
 ui <- fluidPage(
-  
+
+  ## The theme selector lets you experiment with different themes
   shinythemes::themeSelector(),
+  
+  ### Once you decide on a theme, hashtag the previous line and edit the next line to use your theme
   #shinytheme(theme = "flatly"),
 
-    # Application title
+  ## Application title
     titlePanel("Eviction and Race"),
 
-    # Sidebar with a slider input for number of bins 
+  ## Sidebar has two inputs right now.
+    ### The first is where users choose a city. We'll use that selection as a variable called "city"
+    ### The second is where users choose one or more characteristics. We'll use that selection as a variable called "characteristic"
+
         sidebarPanel(
           selectizeInput(inputId = "city", #name of input
                       label = "Choose a city:", #label displayed in ui
@@ -49,8 +71,10 @@ ui <- fluidPage(
                         selected = "nonwhite_pct",
                         multiple = TRUE,
                         options = list(plugins= list('remove_button')))
-                        ),
-        # Show a plot of the generated distribution
+                        ), # close the sidebar panel
+        
+  ## Main panel has three tabs right now.
+    ### We express the outputs here by name, but we create them in the server section of this file
         mainPanel(
           navbarPage(
             "Select Tab For Output",
@@ -60,29 +84,39 @@ ui <- fluidPage(
                     dataTableOutput("race_descriptives")),
             tabPanel("iFrame Test",
                       htmlOutput("frame"))
-        )
-    )
-)
+        ) # close the navbarPage
+    ) # close the main panel
+) # close the ui code
 
-# Define server logic required to draw a histogram
+# Define server logic
 server <- function(input, output) {
   
+  ## We have two separate datasets that will react to values from the sidebar selections.
   
+  ### The first filters the big dataset for the inputted city and the inputted characteristic(s)
   dataInput <- reactive({
     han |> 
       filter(xsite == input$city &
                characteristic %in% input$characteristic)
   })
   
+  ### The second filter the websites for a city
   citysiteInput <- reactive({
     citysites |> 
       filter(xsite == input$city)
   })
   
+## Here I am renaming each dataset after filtering
+### The debounce function adds a small amount of time (500ms) between filtering the datasets and creating the output.
+### Adding that time tends to make the output more responsive to the filters 
+
   han_filter <- dataInput |>  debounce(500)
   
   site_filter <- citysiteInput |> debounce(500)
   
+
+  ## This section creates the scatterplot.
+  ### The name we give to the object - eviction_scatterplot - is the name we will use in the output for the tab in the ui
   output$eviction_scatterplot <- renderPlot({
         plot1 <- han_filter() |> 
           group_by(characteristic) |> 
@@ -95,7 +129,8 @@ server <- function(input, output) {
     
           plot1
         })
-    
+
+  ## This section creates the descriptives table  
   output$race_descriptives <- renderDataTable({    
       table1 <- han_filter() |> 
         group_by(characteristic, majority_race) |> 
@@ -110,6 +145,7 @@ server <- function(input, output) {
       })
     
 
+## This section creates the iframe embeds of the websites
   output$frame <- renderUI({ 
     
     city_embed <- site_filter()$website
@@ -120,8 +156,9 @@ server <- function(input, output) {
                 seamless = TRUE)
   }) 
   
-}
+} # This curly bracket closes the server code
 
-# Run the application 
+
+
+ # After the ui code and server code are set, run the application 
 shinyApp(ui = ui, server = server)
-
