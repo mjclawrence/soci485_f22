@@ -5,7 +5,7 @@ library(weights)
 library(DT)
 library(pollster)
 
-#nstall.packages("shiny") # hashtag after installing
+#install.packages("shiny") # hashtag after installing
 library(shiny)
 
 #install.packages("shinythemes") # hashtag after installing

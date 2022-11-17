@@ -4,7 +4,7 @@ library(tidyverse)
 library(weights)
 library(DT)
 
-#nstall.packages("shiny") # hashtag after installing
+#install.packages("shiny") # hashtag after installing
 library(shiny)
 
 #install.packages("shinythemes") # hashtag after installing
