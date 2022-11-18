@@ -36,10 +36,10 @@ mccallum <- bind_rows(mccallum_all, mccallum) |>
 ui <- fluidPage(
   
   ## The theme selector lets you experiment with different themes
-  shinythemes::themeSelector(),
+  #shinythemes::themeSelector(),
   
   ### Once you decide on a theme, hashtag the previous line and edit the next line to use your theme
-  #shinytheme(theme = "flatly"),
+  shinytheme(theme = "flatly"),
 
     ## Application title
     titlePanel("Presidential Vote By Union Household Status"),
@@ -49,7 +49,7 @@ ui <- fluidPage(
       ### The second is where users choose one or more years. We'll use that selection as a variable called "year"
 
         sidebarPanel(
-          selectInput(inputId = "state", #name of input
+          selectizeInput(inputId = "state", #name of input
                              label = "Choose a State:", #label displayed in ui
                              choices = as.character(unique(mccallum$state)),
                              selected = "All"),
@@ -64,7 +64,7 @@ ui <- fluidPage(
         mainPanel(
           tabsetPanel(
             tabPanel("Year Plot", 
-                    plotOutput("year_plot")),
+                    plotOutput("year_plot"))
 
         ) # close the tabset panel
     ) # close the main panel
@@ -99,6 +99,7 @@ server <- function(input, output) {
           
           plot1
         })
+
   
 } # This curly bracket closes the server code
 
