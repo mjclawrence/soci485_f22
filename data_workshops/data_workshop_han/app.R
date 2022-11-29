@@ -67,10 +67,30 @@ ui <- fluidPage(
                       selected = "PHILADELPHIA"),
           selectizeInput(inputId = "characteristic", #name of input
                         label = "Select characteristic(s):", #label displayed in ui
-                        choices = as.character(unique(han$characteristic)),
+                        #choices = as.character(unique(han$characteristic)),
                         selected = "nonwhite_pct",
                         multiple = TRUE,
-                        options = list(plugins= list('remove_button')))
+                        options = list(plugins= list('remove_button')),
+                        list(
+                          `Demographic Measures` = list(
+                            "Pct Non White Residents" = "nonwhite_pct",
+                            "Pct Asian Residents" = "asian_pct",
+                            "Pct Black Residents" = "black_pct",
+                            "Pct Hispanic Residents" = "hisp_pct",
+                            "Pct Other Residents" = "other_pct",
+                            "Pct White Residents" = "white_pct"
+                          ),
+                          `Zip Code Economic Indicators` = list(
+                          "Gini Coefficient" = "gini",
+                          "Unemployment Rate" = "unemploymentrate",
+                          "Pct of Residents With College Degree or More" = "college_plus",
+                          "Pct of Residents With Commutes < 15 Minutes" = "Less_than_15_minutes"),
+                             `Household Economic Indicators` = list(
+                               "Median Household Income" = "median_hh_income",
+                               "Median Pct of Income Spent on Rent" = "rent_pct_incomeE",
+                               "Pct of Households With Single Parent" = "singlerate",
+                               "Pct of Households Receiving SNAP Benefits" = "snap_pct",
+                               "Pct of Housing Units Occupied By Renters" = "prop_renter_occ")))
                         ), # close the sidebar panel
         
   ## Main panel has three tabs right now.
