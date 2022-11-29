@@ -25,6 +25,14 @@ tiger <- tiger |>
   filter(!is.na(crimsent)) |> 
   filter(!is.na(value))
 
+tiger |> 
+  filter(characteristic == "education") |> 
+  crosstab(cancul1, value, weight_w92,
+           format = "long") |> 
+  ggplot(aes(x = cancul1, y = pct)) +
+  geom_col() + facet_wrap(~value) +
+  theme(legend.position = "bottom")
+
 
 # First part of the app is setting up the user interface
 ui <- fluidPage(
@@ -56,7 +64,7 @@ ui <- fluidPage(
                     plotOutput("descriptive_plot")),
             tabPanel("Hypothesis Test", 
                     helpText("Highlighted groups indicate a significant association between beliefs about informal and formal punishment"),
-                    dataTableOutput("hypothesis_table")),
+                    DT::dataTableOutput("hypothesis_table")),
         ) # close the tabset panel
     ) # close the main panel
 ) # close the ui code
@@ -94,9 +102,10 @@ server <- function(input, output) {
           
           plot1
         })
+  
 
 ## This section creates the table with the chi square test results 
-  output$hypothesis_table <- renderDataTable({
+  output$hypothesis_table <- DT::renderDataTable({
     table1 <- tiger_filter() |> 
       group_by(value) |> 
       summarise(chisq_p = wtd.chi.sq(cancul1, crimsent, 
