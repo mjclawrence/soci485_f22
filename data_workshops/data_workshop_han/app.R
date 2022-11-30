@@ -175,26 +175,33 @@ server <- function(input, output) {
     
     plot1
   })
-  
-  ## This section creates the descriptives table  
-  output$race_descriptives <- DT::renderDataTable({    
-    table1 <- han_filter() |> 
-      mutate(total_pop = sum(population),
-             total_eviction = sum(eviction_count)) |> 
-      group_by(majority_race) |> 
-      summarise("Eviction Rate" = round(wtd.mean(evict_pct, population, na.rm = TRUE),3),
-                "Proportion of All Evictions" = round((sum(eviction_count)/total_eviction),3),
-                "Proportion of Total Population" = round((sum(population)/total_pop),3)) |> 
-      distinct() |> 
-      pivot_longer(names_to = "variable_name", values_to = "mean", 2:4) |> 
-      pivot_wider(names_from = "majority_race", values_from = "mean") 
-    
-    table2 <- han_filter() |> 
-      group_by(variable_name, majority_race) |> 
-      summarise(mean = round(wtd.mean(value, population, na.rm = TRUE),2)) |> 
-      pivot_wider(names_from = "majority_race", values_from = "mean")
 
-      table3 <- bind_rows(table1, table2) |> 
+
+  table1 <- reactive({
+    han_filter() |> 
+    mutate(total_pop = sum(population),
+           total_eviction = sum(eviction_count)) |> 
+    group_by(majority_race) |> 
+    summarise("Eviction Rate" = round(wtd.mean(evict_pct, population, na.rm = TRUE),3),
+              "Proportion of All Evictions" = round((sum(eviction_count)/total_eviction),3),
+              "Proportion of Total Population" = round((sum(population)/total_pop),3)) |> 
+    distinct() |> 
+    pivot_longer(names_to = "variable_name", values_to = "mean", 2:4) |> 
+    pivot_wider(names_from = "majority_race", values_from = "mean") 
+  })
+  
+  
+  table2 <- reactive({
+    han_filter() |> 
+    group_by(variable_name, majority_race) |> 
+    summarise(mean = round(wtd.mean(value, population, na.rm = TRUE),2)) |> 
+    pivot_wider(names_from = "majority_race", values_from = "mean")
+  })
+    
+## This section creates the descriptives table  
+  output$race_descriptives <- DT::renderDataTable({    
+
+      table3 <- bind_rows(table1(), table2()) |> 
         relocate(variable_name) |> 
         datatable(rownames = FALSE,
                   options = list(
@@ -203,17 +210,17 @@ server <- function(input, output) {
         formatStyle(
           "variable_name",
           target = 'row',
-          backgroundColor = styleEqual(c("Eviction Rate", "BLACK"), 
+          backgroundColor = styleEqual(c("Eviction Rate", "Percent Population Nonwhite"), 
                                        c('cornflowerblue', 'white'))) |> 
         formatStyle(
           "variable_name",
           target = 'row',
-          backgroundColor = styleEqual(c("Proportion of All Evictions", "WHITE"), 
+          backgroundColor = styleEqual(c("Proportion of All Evictions", "Percent Population Nonwhite"), 
                                        c('cornflowerblue', 'white'))) |> 
         formatStyle(
           "variable_name",
           target = 'row',
-          backgroundColor = styleEqual(c("Proportion of Population", "NO MAJORITY"), 
+          backgroundColor = styleEqual(c("Proportion of Total Population", "Percent Population Nonwhite"), 
                                        c('cornflowerblue', 'white')))
           
     table3
