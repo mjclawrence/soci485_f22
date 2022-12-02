@@ -25,15 +25,6 @@ tiger <- tiger |>
   filter(!is.na(crimsent)) |> 
   filter(!is.na(value))
 
-tiger |> 
-  filter(characteristic == "education") |> 
-  crosstab(cancul1, value, weight_w92,
-           format = "long") |> 
-  ggplot(aes(x = cancul1, y = pct)) +
-  geom_col() + facet_wrap(~value) +
-  theme(legend.position = "bottom")
-
-
 # First part of the app is setting up the user interface
 ui <- fluidPage(
   
@@ -65,6 +56,11 @@ ui <- fluidPage(
             tabPanel("Hypothesis Test", 
                     helpText("Highlighted groups indicate a significant association between beliefs about informal and formal punishment"),
                     DT::dataTableOutput("hypothesis_table")),
+            tabPanel("Descriptive Tables",
+                     helpText("The table below shows the distribution of responses to the following question about cancel culture: QUESTION TEXT HERE"),
+                     tableOutput("cancul_descriptives"),
+                     helpText("The table below shows the distribution of responses to the following question about criminal sentencing: QUESTION TEXT HERE"),
+                     tableOutput("crimsent_descriptives"))
         ) # close the tabset panel
     ) # close the main panel
 ) # close the ui code
@@ -130,6 +126,20 @@ server <- function(input, output) {
     table1
         })
   
+  ## This section creates the descriptive table
+  
+  output$cancul_descriptives <- renderTable({
+    tiger |> 
+      topline(cancul1, weight_w92, valid_pct = FALSE, cum_pct = FALSE)
+  })
+  
+
+  output$crimsent_descriptives <- renderTable({
+    tiger |> 
+      topline(crimsent, weight_w92, valid_pct = FALSE, cum_pct = FALSE)
+  })
+  
+    
 } # This curly bracket closes the server code
 
 # After the ui code and server code are set, run the application 
