@@ -126,17 +126,17 @@ server <- function(input, output) {
     table1
         })
   
-  ## This section creates the descriptive table
+  ## This section creates the descriptive tables
   
   output$cancul_descriptives <- renderTable({
-    tiger |> 
-      topline(cancul1, weight_w92, valid_pct = FALSE, cum_pct = FALSE)
+    tiger_filter() |> 
+      crosstab(value, cancul1, weight_w92, n = FALSE)
   })
   
 
   output$crimsent_descriptives <- renderTable({
-    tiger |> 
-      topline(crimsent, weight_w92, valid_pct = FALSE, cum_pct = FALSE)
+    tiger_filter() |> 
+      crosstab(value, crimsent, weight_w92, n = FALSE)
   })
   
     
