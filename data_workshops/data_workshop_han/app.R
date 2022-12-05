@@ -3,6 +3,7 @@
 library(tidyverse)
 library(weights)
 library(DT)
+library(scales)
 
 #install.packages("shiny") # hashtag after installing
 library(shiny)
@@ -30,7 +31,11 @@ han <- han |>
   relocate(population, .after = "xsite") |> 
   relocate(majority_race, .after = population) |> 
   relocate(c(eviction_count, renter_hh_2019), .after = evict_pct) |> 
-  pivot_longer(names_to = "characteristic", values_to = "value", 9:24)
+  pivot_longer(names_to = "characteristic", values_to = "value", 9:24) |> 
+  mutate(xsite = str_to_title(xsite)) |> 
+  mutate(xsite = ifelse(xsite == "Fortworth", "Fort Worth", xsite)) |> 
+  mutate(label_format = ifelse(characteristic == "median_hh_income", dollar_format()(value),
+                               round(value,2)))
 
 han <- han|>
   mutate(variable_name = ifelse(characteristic == "median_hh_income", "Median Household Income",
@@ -50,24 +55,25 @@ han <- han|>
                                                                                                                            ifelse(characteristic == "Less_than_15_minutes", "Proportion Population with Commute Less than 15 minutes",
                                                                                                                                   "Proportion Population with College Degree or Higher"))))))))))))))))
 
+
+
 # The tab with iframe embeds will need urls.
 ## Most of these don't work as embeds but this is where
 ## you will add the maps of each city in xsite order
 
-websites <- c("https://www.datawrapper.de",
-              "https://www.cnn.com",
-              "https://middlebury.instructure.com",
-              "https://www.nytimes.com",
-              "https://www.bbc.com",
-              "https://www.asanet.org",
-              "https://www.rstudio.com",
-              "https://www.espn.com",
-              "https://www.amazon.com")
+websites <- c("https://datawrapper.dwcdn.net/WxsP3/2/", #philadelphia
+              "https://datawrapper.dwcdn.net/JoA5X/2/", #South Bend
+              "https://datawrapper.dwcdn.net/ZBvdY/2/", #Indianapolis
+              "https://datawrapper.dwcdn.net/23uKF/1/", #Phoenix
+              "https://datawrapper.dwcdn.net/JoA5X/2/", #Dallas
+              "https://datawrapper.dwcdn.net/99I6W/1/", #Houston
+              "https://datawrapper.dwcdn.net/2UH3v/1/", #Fortworth
+              "https://datawrapper.dwcdn.net/qEQ69/2/", #Austin
+              "https://datawrapper.dwcdn.net/yU9XH/1/") #New York
 
 citysites <- bind_cols(unique(han$xsite), websites) |> 
   rename(xsite = 1,
          website = 2)
-
 
 # First part of the app is setting up the user interface
 
@@ -89,11 +95,25 @@ ui <- fluidPage(
   sidebarPanel(
     selectizeInput(inputId = "city", #name of input
                    label = "Choose a city:", #label displayed in ui
-                   choices = as.character(unique(han$xsite)),
-                   selected = "PHILADELPHIA"),
+                   #choices = as.character(unique(han$xsite)),
+                   selected = "Philadelphia",
+                   list(
+                     "New York",
+                     "Philadelphia",
+                     "Phoenix",
+                     "Indiana" = list(
+                       "Indianapolis",
+                       "South Bend"
+                     ),
+                     "Texas" = list(
+                       "Austin",
+                       "Dallas",
+                       "Fort Worth",
+                       "Houston"
+                     )
+                   )),
     selectizeInput(inputId = "characteristic", #name of input
                    label = "Select characteristic(s):", #label displayed in ui
-                   #choices = as.character(unique(han$characteristic)),
                    selected = "nonwhite_pct",
                    multiple = TRUE,
                    options = list(plugins= list('remove_button')),
@@ -128,6 +148,8 @@ ui <- fluidPage(
                plotOutput("eviction_scatterplot")),
       tabPanel("Descriptives By Majority Race", 
                DT::dataTableOutput("race_descriptives")),
+      tabPanel("Share of Evictions and Population",
+               DT::dataTableOutput("eviction_shares")),
       tabPanel("iFrame Test",
                htmlOutput("frame"))
     ) # close the navbarPage
@@ -146,11 +168,13 @@ server <- function(input, output) {
                characteristic %in% input$characteristic)
   })
   
-  ### The second filter the websites for a city
+  ### The second filters the websites for a city
   citysiteInput <- reactive({
     citysites |> 
       filter(xsite == input$city)
   })
+  
+  
   
   ## Here I am renaming each dataset after filtering
   ### The debounce function adds a small amount of time (500ms) between filtering the datasets and creating the output.
@@ -160,18 +184,38 @@ server <- function(input, output) {
   
   site_filter <- citysiteInput |> debounce(500)
   
+  corr_coefficient <- reactive({
+    han_filter() |> 
+      group_by(characteristic) |> 
+      summarise(coefficient = wtd.cor(value, evict_pct, population)[[1]])
+  })
+  
+  han_filter2 <- reactive({
+    left_join(han_filter(), corr_coefficient()) |> 
+      mutate(label = paste0(variable_name, "\nCorrelation With Eviction = ", round(coefficient, 3)))
+  })
+  
   
   ## This section creates the scatterplot.
   ### The name we give to the object - eviction_scatterplot - is the name we will use in the output for the tab in the ui
+  
   output$eviction_scatterplot <- renderPlot({
-    plot1 <- han_filter() |> 
-      group_by(characteristic) |> 
+  
+    
+    
+    plot1 <- han_filter2() |> 
+      group_by(characteristic) |>
       ggplot(aes(x = value,
                  y = evict_pct,
                  color = majority_race)) +
       geom_point(aes(size = 3)) + 
-      facet_wrap(~characteristic, scales = "free") +
-      theme(legend.position = "bottom") + guides(size = "none")
+      geom_smooth(aes(color = NULL), method = "lm", se = FALSE) +
+      facet_wrap(~label, scales = "free",
+                 labeller = label_wrap_gen(width=30)) + 
+      theme(legend.position = "bottom") + guides(size = "none") +
+      labs(x = "Value of Selected Characteristic", 
+           y = "Percentage of Renter-Occupied Housing Units\nExperiencing Eviction",
+           color = "Majority Race\nIn Zip Code")
     
     plot1
   })
@@ -179,7 +223,7 @@ server <- function(input, output) {
 
   table1 <- reactive({
     han_filter() |> 
-    mutate(total_pop = sum(population),
+      mutate(total_pop = sum(population),
            total_eviction = sum(eviction_count)) |> 
     group_by(majority_race) |> 
     summarise("Eviction Rate" = round(wtd.mean(evict_pct, population, na.rm = TRUE),3),
@@ -198,34 +242,47 @@ server <- function(input, output) {
     pivot_wider(names_from = "majority_race", values_from = "mean")
   })
     
-## This section creates the descriptives table  
+  ## This section creates the descriptives table  
   output$race_descriptives <- DT::renderDataTable({    
-
-      table3 <- bind_rows(table1(), table2()) |> 
-        relocate(variable_name) |> 
-        datatable(rownames = FALSE,
-                  options = list(
-                    dom = 'Btip', # see explanation below
-                    buttons = list(list(extend = 'copy', title = NULL)))) |> 
-        formatStyle(
-          "variable_name",
-          target = 'row',
-          backgroundColor = styleEqual(c("Eviction Rate", "Percent Population Nonwhite"), 
-                                       c('cornflowerblue', 'white'))) |> 
-        formatStyle(
-          "variable_name",
-          target = 'row',
-          backgroundColor = styleEqual(c("Proportion of All Evictions", "Percent Population Nonwhite"), 
-                                       c('cornflowerblue', 'white'))) |> 
-        formatStyle(
-          "variable_name",
-          target = 'row',
-          backgroundColor = styleEqual(c("Proportion of Total Population", "Percent Population Nonwhite"), 
-                                       c('cornflowerblue', 'white')))
-          
-    table3
+    table1 <- han_filter() |> 
+      group_by(variable_name, majority_race) |> 
+      summarise(mean = round(wtd.mean(value, population, na.rm = TRUE),2)) |> 
+      pivot_wider(names_from = "majority_race", values_from = "mean") |> 
+      datatable(rownames = FALSE,
+                guides(scale = "none"),
+                options = list(
+                  dom = 'Btip', # see explanation below
+                  buttons = list(list(extend = 'copy', title = NULL))))
+    
+    table1
   })
   
+  ## This section creates the share of eviction and share of population table
+  table2 <- reactive({
+    han_filter() |> 
+      mutate(total_pop = sum(population),
+             total_eviction = sum(eviction_count)) |> 
+      group_by(majority_race) |> 
+      summarise("Eviction Rate" = round(wtd.mean(evict_pct, population, na.rm = TRUE),3),
+                "Proportion of All Evictions" = round((sum(eviction_count)/total_eviction),3),
+                "Proportion of Total Population" = round((sum(population)/total_pop),3)) |> 
+      distinct()|>
+      pivot_longer(names_to = "variable_name", values_to = "mean", 2:4) |> 
+      pivot_wider(names_from = "majority_race", values_from = "mean") 
+  })
+  
+  output$eviction_shares<- DT::renderDataTable({    
+    
+    table2<-table2()|> # CHANGE THE DATASET YOU ARE PULLING FROM HERE TO table2() WHICH YOU CREATED ABOVE NOT han_filter()
+      #select("Eviction Rate", "Proportion of All Evictions", "Proportion of Total Population")|>
+      # DON'T USE SELECT IN LINE ABOVE; THAT IS FOR CHOOSING COLUMNS BUT THESE ARE ROWS
+      # AND THEY ARE THE ONLY ROWS IN THIS TABLE SO YOU WOULDN'T NEED TO FILTER FOR THEM EITHER
+      datatable(rownames = FALSE,
+                options = list(
+                  dom = 'Btip', # see explanation below
+                  buttons = list(list(extend = 'copy', title = NULL))))
+    table2
+  })
   
   ## This section creates the iframe embeds of the websites
   output$frame <- renderUI({ 

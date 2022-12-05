@@ -5,9 +5,9 @@ account: mjclawrence
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 7766417
-bundleId: 6569894
+bundleId: 6583283
 url: https://mjclawrence.shinyapps.io/data_workshop_han/
-when: 1669766373.81123
-lastSyncTime: 1669766373.81124
+when: 1670009360.26857
+lastSyncTime: 1670009360.26858
 asMultiple: FALSE
 asStatic: FALSE
